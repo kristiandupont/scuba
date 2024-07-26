@@ -8,64 +8,113 @@ let currentMode: string | null = null;
 
 let activeCommandChain: string[] = [];
 
+async function changeMode({ mode }: { mode: string }) {
+  currentMode = mode;
+  resetCommandChain();
+
+  vscode.commands.executeCommand(
+    "setContext",
+    "scuba.currentMode",
+    currentMode
+  );
+  updateModeIndicator();
+
+  if (currentMode === "normal" && !blockTypeSub) {
+    blockTypeSub = vscode.commands.registerTextEditorCommand(
+      "type",
+      normalType
+    );
+  } else if (currentMode !== "normal" && !!blockTypeSub) {
+    blockTypeSub.dispose();
+    blockTypeSub = null;
+  }
+
+  // Set cursor style:
+  if (!vscode.window.activeTextEditor) {
+    return;
+  }
+  vscode.window.activeTextEditor.options.cursorStyle =
+    currentMode === "insert"
+      ? vscode.TextEditorCursorStyle.Line
+      : vscode.TextEditorCursorStyle.Block;
+}
+
 function resetCommandChain() {
   activeCommandChain = [];
+  updateModeIndicator();
 }
 
 const rootMap = [
   {
     keys: "i",
-    command: "scuba.changeMode",
-    args: {
-      mode: "insert",
+    command: async function () {
+      changeMode({ mode: "insert" });
     },
   },
   {
     keys: "a",
     command: async function () {
       await vscode.commands.executeCommand("cursorRight");
+      changeMode({ mode: "insert" });
+    },
+  },
+  {
+    keys: "o",
+    command: async function () {
+      await vscode.commands.executeCommand("editor.action.insertLineAfter");
+      changeMode({ mode: "insert" });
+    },
+  },
+  {
+    keys: "O",
+    command: async function () {
+      await vscode.commands.executeCommand("editor.action.insertLineBefore");
+      changeMode({ mode: "insert" });
+    },
+  },
+  { keys: "u", command: "undo" },
+  { keys: "w", command: "cursorWordEndRightSelect" },
+  { keys: "b", command: "cursorWordStartLeftSelect" },
+  { keys: "y", command: "editor.action.clipboardCopyAction" },
+  { keys: "d", command: "editor.action.clipboardCutAction" },
+  { keys: "p", command: "editor.action.clipboardPasteAction" },
+  {
+    keys: "c",
+    command: async function () {
+      await vscode.commands.executeCommand("deleteRight");
       await vscode.commands.executeCommand("scuba.changeMode", {
         mode: "insert",
       });
     },
   },
-  {
-    keys: "u",
-    command: "undo",
-  },
-  {
-    keys: "y",
-    command: "editor.action.clipboardCopyAction",
-  },
-  {
-    keys: "d",
-    command: "editor.action.clipboardCutAction",
-  },
-  {
-    keys: "p",
-    command: "editor.action.clipboardPasteAction",
-  },
-  {
-    keys: " m",
-    command: "textmarker.toggleHighlight",
-  },
-  {
-    keys: "za",
-    command: "editor.toggleFold",
-  },
-  {
-    keys: "gd",
-    command: "editor.action.goToDeclaration",
-  },
-  {
-    keys: "gr",
-    command: "references-view.findReferences",
-  },
-  {
-    keys: "gh",
-    command: "editor.action.showHover",
-  },
+  { keys: " m", command: "textmarker.toggleHighlight" },
+  { keys: "za", command: "editor.toggleFold" },
+  { keys: "gd", command: "editor.action.goToDeclaration" },
+  { keys: "gr", command: "references-view.findReferences" },
+  { keys: "gh", command: "editor.action.showHover" },
+  { keys: "*", command: "findWordAtCursor.next" },
+  { keys: "#", command: "findWordAtCursor.previous" },
+  { keys: "J", command: "editor.action.joinLines" },
+  { keys: 'mi"', command: "extension.selectDoubleQuote" },
+  { keys: "mi'", command: "extension.selectSingleQuote" },
+  { keys: "mi(", command: "extension.selectParenthesis" },
+  { keys: "mi[", command: "extension.selectSquareBrackets" },
+  { keys: "mi{", command: "extension.selectCurlyBrackets" },
+  { keys: "mi`", command: "extension.selectBackTick" },
+  { keys: "mi<", command: "extension.selectAngleBrackets" },
+  { keys: "ma'", command: "extension.selectEitherQuote" },
+  { keys: "ma(", command: "extension.selectParenthesisOuter" },
+  { keys: "ma[", command: "extension.selectSquareBracketsOuter" },
+  { keys: "ma{", command: "extension.selectCurlyBracketsOuter" },
+  { keys: "ma<", command: "extension.selectInTag" },
 ];
+
+/*
+{
+  "key": "shift+alt+right",
+  "command": "cursorWordEndRightSelect",
+  "when": "textInputFocus"
+}*/
 
 function updateModeIndicator() {
   if (!modeIndicator) {
@@ -98,33 +147,6 @@ async function normalType(
     }
     resetCommandChain();
   }
-}
-
-async function changeMode({ mode }: { mode: string }) {
-  currentMode = mode;
-  resetCommandChain();
-
-  vscode.commands.executeCommand("setContext", "scuba.current", currentMode);
-  updateModeIndicator();
-
-  if (currentMode === "normal" && !blockTypeSub) {
-    blockTypeSub = vscode.commands.registerTextEditorCommand(
-      "type",
-      normalType
-    );
-  } else if (currentMode !== "normal" && !!blockTypeSub) {
-    blockTypeSub.dispose();
-    blockTypeSub = null;
-  }
-
-  // Set cursor style:
-  if (!vscode.window.activeTextEditor) {
-    return;
-  }
-  vscode.window.activeTextEditor.options.cursorStyle =
-    currentMode === "insert"
-      ? vscode.TextEditorCursorStyle.Line
-      : vscode.TextEditorCursorStyle.Block;
 }
 
 function initDefaultMode() {

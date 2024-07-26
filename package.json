@@ -20,10 +20,6 @@
         "title": "Scuba: Change Mode"
       },
       {
-        "command": "scuba.reset",
-        "title": "Scuba: Reset command chain"
-      },
-      {
         "command": "scuba.expandSelection",
         "title": "Scuba: Expand selection"
       },

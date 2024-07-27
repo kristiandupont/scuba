@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export async function moveAllCursorsRightUnlessTheyAreAtEOL(
+export async function moveCursorsRightUnlessTheyAreAtEOL(
   textEditor: vscode.TextEditor
 ) {
   const selections = textEditor.selections;

@@ -2,13 +2,43 @@ import * as vscode from "vscode";
 import { KeyMap, makeSubChainHandler, Mode } from "./extension";
 import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
 
+export const clipboardKeys: KeyMap = [
+  {
+    keys: "y",
+    command: "editor.action.clipboardCopyAction",
+    leaveInMode: "normal",
+  },
+  {
+    keys: "d",
+    command: "editor.action.clipboardCutAction",
+    leaveInMode: "normal",
+  },
+  { keys: "D", command: "deleteAllRight", leaveInMode: "normal" },
+  {
+    keys: "p",
+    command: "editor.action.clipboardPasteAction",
+    leaveInMode: "normal",
+  },
+  {
+    keys: "c",
+    command: async function () {
+      await vscode.commands.executeCommand("deleteRight");
+      await vscode.commands.executeCommand("scuba.changeMode", {
+        mode: "insert",
+      });
+    },
+    leaveInMode: "normal",
+  },
+];
+
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
   { keys: "<down>", command: "cursorDown" },
   { keys: "<left>", command: "cursorLeft" },
   { keys: "<right>", command: "cursorRight" },
-  { keys: "^", command: "cursorLineStart" },
-  { keys: "$", command: "cursorLineEnd" },
+
+  { keys: "^", command: "cursorLineStartSelect" },
+  { keys: "$", command: "cursorLineEndSelect" },
 
   { keys: "i", leaveInMode: "insert" },
   { keys: "I", command: "cursorHome", leaveInMode: "insert" },
@@ -42,20 +72,6 @@ const normalKeyMap: KeyMap = [
   { keys: "æ", command: "cursorWordPartRightSelect" },
   { keys: "ø", command: "cursorWordPartLeftSelect" },
 
-  { keys: "y", command: "editor.action.clipboardCopyAction" },
-  { keys: "d", command: "editor.action.clipboardCutAction" },
-  { keys: "D", command: "deleteAllRight" },
-  { keys: "p", command: "editor.action.clipboardPasteAction" },
-  {
-    keys: "c",
-    command: async function () {
-      await vscode.commands.executeCommand("deleteRight");
-      await vscode.commands.executeCommand("scuba.changeMode", {
-        mode: "insert",
-      });
-    },
-  },
-
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
 
@@ -85,15 +101,17 @@ const normalKeyMap: KeyMap = [
   { keys: "r", leaveInMode: "replace-char" },
 
   // Line select mode (v)
-  { keys: "V", leaveInMode: "line-elect" },
+  { keys: "V", leaveInMode: "line-select" },
 
   // Smart select mode (s)
   { keys: "s", leaveInMode: "smart-select" },
+
+  ...clipboardKeys,
 ];
 
 export const normalMode: Mode = {
   isInsertMode: false,
   name: "normal",
-  statusItemText: "Normal (updated!)",
+  statusItemText: "Normal",
   handleSubCommandChain: makeSubChainHandler(normalKeyMap),
 };

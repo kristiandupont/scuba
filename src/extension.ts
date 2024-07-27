@@ -211,6 +211,7 @@ export function activate(context: vscode.ExtensionContext) {
       handleNonCharacterKey
     )
   );
+  activateAdditionalCommands(context);
 
   modeIndicator = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -218,9 +219,23 @@ export function activate(context: vscode.ExtensionContext) {
   );
   modeIndicator.show();
 
-  activateAdditionalCommands(context);
-
   changeMode({ mode: defaultMode });
+
+  // Listen for selection changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection((e) => {
+      if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
+        changeMode({ mode: "normal" });
+      }
+    })
+  );
+
+  // Listen for active editor changes
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(() => {
+      changeMode({ mode: "normal" });
+    })
+  );
 }
 
 function activateAdditionalCommands(context: vscode.ExtensionContext) {

@@ -20,10 +20,6 @@
         "title": "Scuba: Change Mode"
       },
       {
-        "command": "scuba.expandSelection",
-        "title": "Scuba: Expand selection"
-      },
-      {
         "command": "scuba.selectNextSibling",
         "title": "Scuba: Select next sibling"
       },

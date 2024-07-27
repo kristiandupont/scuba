@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
+import { clipboardKeys } from "./normalMode";
 
 export const smartSelectMode: Mode = {
   isInsertMode: false,
@@ -13,5 +14,6 @@ export const smartSelectMode: Mode = {
     { keys: "<down>", command: "scuba.selectNextSibling" },
     { keys: "<left>", command: "editor.action.smartSelect.shrink" },
     { keys: "<right>", command: "editor.action.smartSelect.expand" },
+    ...clipboardKeys,
   ]),
 };

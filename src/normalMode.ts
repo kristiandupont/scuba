@@ -29,6 +29,10 @@ export const clipboardKeys: KeyMap = [
     },
     leaveInMode: "normal",
   },
+  {
+    keys: "S",
+    leaveInMode: "surround",
+  },
 ];
 
 const normalKeyMap: KeyMap = [
@@ -74,9 +78,11 @@ const normalKeyMap: KeyMap = [
 
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
+  // Todo: @ = insert cursor at next occurrence of word under cursor
 
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },
+  { keys: ",", command: "editor.action.insertCursorBelow" },
 
   // Goto "mode" (g)
   { keys: "gd", command: "editor.action.goToDeclaration" },
@@ -105,6 +111,8 @@ const normalKeyMap: KeyMap = [
 
   // Smart select mode (s)
   { keys: "s", leaveInMode: "smart-select" },
+
+  { keys: "-", leaveInMode: "sneak" },
 
   ...clipboardKeys,
 ];

@@ -6,6 +6,8 @@ import { matchMode } from "./matchMode";
 import { normalMode } from "./normalMode";
 import { replaceCharMode } from "./replaceCharMode";
 import { smartSelectMode } from "./smartSelectMode";
+import { surroundMode } from "./surroundMode";
+import { sneakMode } from "./sneakMode";
 
 export const defaultMode = "normal";
 
@@ -138,6 +140,8 @@ const modes: Mode[] = [
   replaceCharMode,
   lineSelectMode,
   smartSelectMode,
+  surroundMode,
+  sneakMode,
 ];
 
 function updateModeIndicator() {

@@ -21,6 +21,8 @@ type Mode =
         keys: string,
         textEditor: vscode.TextEditor
       ) => Promise<void>;
+      onEnter?: () => Promise<void>;
+      onExit?: () => Promise<void>;
     };
 
 const insertMode: Mode = {
@@ -30,6 +32,14 @@ const insertMode: Mode = {
 };
 
 async function changeMode({ mode: modeName }: { mode: string }) {
+  const previousMode = currentMode
+    ? modes.find((mode) => mode.name === currentMode)
+    : null;
+
+  if (previousMode && !previousMode.isInsertMode && previousMode.onExit) {
+    previousMode.onExit();
+  }
+
   const mode = modes.find((mode) => mode.name === modeName);
   if (!mode) {
     vscode.window.showErrorMessage(`Unknown mode: ${modeName}`);
@@ -38,6 +48,9 @@ async function changeMode({ mode: modeName }: { mode: string }) {
 
   currentMode = modeName;
   resetCommandChain();
+  if (!mode.isInsertMode && mode.onEnter) {
+    mode.onEnter();
+  }
 
   vscode.commands.executeCommand(
     "setContext",
@@ -116,6 +129,16 @@ function makeSubChainHandler(keyMap: KeyMap, defaultLeaveInMode?: string) {
         changeMode({ mode: leaveInMode });
       }
       resetCommandChain();
+    } else {
+      // If no key definition starts with the current chain, give a warning
+      // and reset the chain.
+
+      const partialMatch = keyMap.some((root) => root.keys.startsWith(keys));
+
+      if (!partialMatch) {
+        vscode.window.showWarningMessage(`Unknown key sequence: ${keys}.`);
+        changeMode({ mode: "normal" });
+      }
     }
   };
 }
@@ -163,14 +186,140 @@ const matchMode: Mode = {
   ),
 };
 
+const replaceCharMode: Mode = {
+  isInsertMode: false,
+  name: "replaceChar",
+  statusItemText: "Replace Char",
+  handleSubCommandChain: async function (
+    keys: string,
+    textEditor: vscode.TextEditor
+  ) {
+    const key = keys[0];
+    const charCode = key.charCodeAt(0);
+    const char = String.fromCharCode(charCode);
+    const selections = textEditor.selections;
+
+    await textEditor.edit((editBuilder) => {
+      selections.forEach((selection) => {
+        const position = selection.active;
+        const range = new vscode.Range(position, position.translate(0, 1));
+        editBuilder.replace(range, char);
+      });
+    });
+
+    // Update selections to reflect the new cursor positions
+    const newSelections = selections.map((selection) => {
+      const position = selection.active.translate(0, 1);
+      return new vscode.Selection(position, position);
+    });
+    textEditor.selections = newSelections;
+
+    changeMode({ mode: "normal" });
+  },
+};
+
+const lineSelectMode: Mode = {
+  isInsertMode: false,
+  name: "lineSelect",
+  statusItemText: "Line Select",
+  onEnter: async function () {
+    await vscode.commands.executeCommand("cursorHome");
+    await vscode.commands.executeCommand("cursorHome");
+    await vscode.commands.executeCommand("cursorEndSelect");
+  },
+
+  handleSubCommandChain: async function (
+    keys: string,
+    textEditor: vscode.TextEditor
+  ) {
+    const selections = textEditor.selections;
+
+    if (keys === "<up>") {
+      // If cursor is above the anchor, extend the selection with the entire line above the cursor
+      // If it's below the anchor, move the cursor down one line and shrink the selection to just the cursor.
+
+      const newSelections = selections.map((selection) => {
+        const anchor = selection.anchor;
+        const active = selection.active;
+
+        if (active.line < anchor.line) {
+          const start = new vscode.Position(active.line - 1, 0);
+          const end = anchor;
+          return new vscode.Selection(start, end);
+        } else {
+          const start = active.translate(1, 0);
+          return new vscode.Selection(start, start);
+        }
+      });
+
+      textEditor.selections = newSelections;
+    } else if (keys === "<down>") {
+      // If cursor is below the anchor, extend the selection with the entire line below the cursor
+      // If it's above the anchor, move the cursor up one line and shrink the selection to just the cursor.
+
+      const newSelections = selections.map((selection) => {
+        const anchor = selection.anchor;
+        const active = selection.active;
+
+        if (active.line > anchor.line) {
+          const start = anchor;
+          const end = new vscode.Position(active.line + 1, 0);
+          return new vscode.Selection(start, end);
+        } else {
+          const start = active.translate(-1, 0);
+          return new vscode.Selection(start, start);
+        }
+      });
+
+      textEditor.selections = newSelections;
+    }
+
+    resetCommandChain();
+  },
+};
+
 const normalKeyMap: KeyMap = [
+  {
+    keys: "<up>",
+    command: "cursorUp",
+  },
+  {
+    keys: "<down>",
+    command: "cursorDown",
+  },
+  {
+    keys: "<left>",
+    command: "cursorLeft",
+  },
+  {
+    keys: "<right>",
+    command: "cursorRight",
+  },
+  {
+    keys: "^",
+    command: "cursorLineStart",
+  },
+  {
+    keys: "$",
+    command: "cursorLineEnd",
+  },
   {
     keys: "i",
     leaveInMode: "insert",
   },
   {
+    keys: "I",
+    command: "cursorHome",
+    leaveInMode: "insert",
+  },
+  {
     keys: "a",
     command: moveAllCursorsRightUnlessTheyAreAtEOL,
+    leaveInMode: "insert",
+  },
+  {
+    keys: "A",
+    command: "cursorEnd",
     leaveInMode: "insert",
   },
   {
@@ -189,6 +338,11 @@ const normalKeyMap: KeyMap = [
   },
   { keys: "u", command: "undo" },
   { keys: "U", command: "redo" },
+
+  // Scroll the window up or down one line:
+  { keys: "k", command: "scrollLineDown" },
+  { keys: "j", command: "scrollLineUp" },
+
   { keys: "w", command: "cursorWordEndRightSelect" },
   { keys: "b", command: "cursorWordStartLeftSelect" },
   { keys: "y", command: "editor.action.clipboardCopyAction" },
@@ -231,6 +385,22 @@ const normalKeyMap: KeyMap = [
       changeMode({ mode: "match" });
     },
   },
+
+  // Replace char mode (r)
+  {
+    keys: "r",
+    command: async function () {
+      changeMode({ mode: "replaceChar" });
+    },
+  },
+
+  // Line select mode (v)
+  {
+    keys: "V",
+    command: async function () {
+      changeMode({ mode: "lineSelect" });
+    },
+  },
 ];
 
 const normalMode: Mode = {
@@ -240,7 +410,13 @@ const normalMode: Mode = {
   handleSubCommandChain: makeSubChainHandler(normalKeyMap),
 };
 
-const modes: Mode[] = [insertMode, normalMode, matchMode];
+const modes: Mode[] = [
+  insertMode,
+  normalMode,
+  matchMode,
+  replaceCharMode,
+  lineSelectMode,
+];
 
 /*
 {
@@ -255,21 +431,25 @@ function updateModeIndicator() {
     return;
   }
 
-  const icon = currentMode === "insert" ? "edit" : "keyboard";
+  const mode = modes.find((mode) => mode.name === currentMode);
+
+  const icon = mode?.isInsertMode ? "edit" : "keyboard";
 
   const commandChain =
     activeCommandChain.length > 0
       ? activeCommandChain.join("")
       : "$(star-empty)";
 
-  modeIndicator.text = `$(${icon}) ${currentMode} ${commandChain}`;
+  modeIndicator.text = `$(${icon}) ${mode?.statusItemText} ${commandChain}`;
 }
 
 async function handleNonInsertKey(
   key: string,
   textEditor: vscode.TextEditor,
-  edit: vscode.TextEditorEdit
+  edit?: vscode.TextEditorEdit
 ) {
+  console.info("handleNonInsertKey", key);
+
   activeCommandChain.push(key);
   updateModeIndicator();
 
@@ -295,6 +475,15 @@ async function nonInsertType(
   handleNonInsertKey(key, textEditor, edit);
 }
 
+async function handleNonCharacterKey({ key }: { key: string }) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  handleNonInsertKey(key, editor);
+}
+
 function initDefaultMode() {
   const defaultMode = "normal";
   changeMode({ mode: defaultMode });
@@ -306,6 +495,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.commands.registerCommand("scuba.reset", resetCommandChain)
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "scuba.handleNonCharacterKey",
+      handleNonCharacterKey
+    )
   );
 
   modeIndicator = vscode.window.createStatusBarItem(

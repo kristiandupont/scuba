@@ -38,7 +38,7 @@
         "args": {
           "mode": "normal"
         },
-        "when": "scuba.currentMode == 'insert' && !parameterHintsVisible && !suggestWidgetVisible",
+        "when": "editorTextFocus && scuba.currentMode == 'insert' && !parameterHintsVisible && !suggestWidgetVisible",
         "key": "escape"
       },
       {
@@ -46,8 +46,40 @@
         "args": {
           "mode": "normal"
         },
-        "when": "scuba.currentMode != 'insert'",
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
         "key": "escape"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<up>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "up"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<down>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "down"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<left>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "left"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<right>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "right"
       }
     ]
   },

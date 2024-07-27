@@ -174,7 +174,7 @@ const matchMode: Mode = {
 
 const replaceCharMode: Mode = {
   isInsertMode: false,
-  name: "replaceChar",
+  name: "replace-char",
   statusItemText: "Replace Char",
   handleSubCommandChain: async function (
     keys: string,
@@ -206,7 +206,7 @@ const replaceCharMode: Mode = {
 
 const lineSelectMode: Mode = {
   isInsertMode: false,
-  name: "lineSelect",
+  name: "line-select",
   statusItemText: "Line Select",
   onEnter: async function () {
     await vscode.commands.executeCommand("cursorHome");
@@ -258,6 +258,31 @@ const lineSelectMode: Mode = {
       });
 
       textEditor.selections = newSelections;
+    }
+
+    resetCommandChain();
+  },
+};
+
+const smartSelectMode: Mode = {
+  isInsertMode: false,
+  name: "smart-select",
+  statusItemText: "Smart Select",
+  onEnter: async function () {
+    await vscode.commands.executeCommand("editor.action.smartSelect.expand");
+  },
+  handleSubCommandChain: async function (
+    keys: string,
+    textEditor: vscode.TextEditor
+  ) {
+    if (keys === "<up>") {
+      await vscode.commands.executeCommand("scuba.selectPrevSibling");
+    } else if (keys === "<down>") {
+      await vscode.commands.executeCommand("scuba.selectNextSibling");
+    } else if (keys === "<left>") {
+      await vscode.commands.executeCommand("editor.action.smartSelect.shrink");
+    } else if (keys === "<right>") {
+      await vscode.commands.executeCommand("editor.action.smartSelect.expand");
     }
 
     resetCommandChain();
@@ -331,6 +356,10 @@ const normalKeyMap: KeyMap = [
 
   { keys: "w", command: "cursorWordEndRightSelect" },
   { keys: "b", command: "cursorWordStartLeftSelect" },
+
+  { keys: "æ", command: "cursorWordPartRightSelect" },
+  { keys: "ø", command: "cursorWordPartLeftSelect" },
+
   { keys: "y", command: "editor.action.clipboardCopyAction" },
   { keys: "d", command: "editor.action.clipboardCutAction" },
   { keys: "p", command: "editor.action.clipboardPasteAction" },
@@ -373,20 +402,26 @@ const normalKeyMap: KeyMap = [
   // Replace char mode (r)
   {
     keys: "r",
-    leaveInMode: "replaceChar",
+    leaveInMode: "replace-char",
   },
 
   // Line select mode (v)
   {
     keys: "V",
-    leaveInMode: "lineSelect",
+    leaveInMode: "line-elect",
+  },
+
+  // Smart select mode (s)
+  {
+    keys: "s",
+    leaveInMode: "smart-select",
   },
 ];
 
 const normalMode: Mode = {
   isInsertMode: false,
   name: "normal",
-  statusItemText: "Normal",
+  statusItemText: "Normal (updated!)",
   handleSubCommandChain: makeSubChainHandler(normalKeyMap),
 };
 
@@ -396,6 +431,7 @@ const modes: Mode[] = [
   matchMode,
   replaceCharMode,
   lineSelectMode,
+  smartSelectMode,
 ];
 
 /*

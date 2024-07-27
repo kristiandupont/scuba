@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
 import { activateSmartSelectCommands } from "./smart-select-commands";
+import { moveAllCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
+
+const defaultMode = "normal";
 
 let blockTypeSub: vscode.Disposable | null = null;
 let modeIndicator: vscode.StatusBarItem | null = null;
-let currentMode: string | null = null;
+let currentMode: string = defaultMode;
 
 let activeCommandChain: string[] = [];
 
@@ -84,23 +87,6 @@ function resetCommandChain() {
   updateModeIndicator();
 }
 
-async function moveAllCursorsRightUnlessTheyAreAtEOL(
-  textEditor: vscode.TextEditor
-) {
-  const selections = textEditor.selections;
-  const newSelections = selections.map((selection) => {
-    const position = selection.active;
-    const lineEnd = textEditor.document.lineAt(position.line).range.end;
-    if (!position.isEqual(lineEnd)) {
-      // Move the cursor for this selection one character to the right
-      const newPosition = position.translate(0, 1);
-      return new vscode.Selection(newPosition, newPosition);
-    }
-    return selection;
-  });
-  textEditor.selections = newSelections;
-}
-
 type KeyDefinition = {
   keys: string;
   command?: string | ((textEditor: vscode.TextEditor) => void);
@@ -137,7 +123,7 @@ function makeSubChainHandler(keyMap: KeyMap, defaultLeaveInMode?: string) {
 
       if (!partialMatch) {
         vscode.window.showWarningMessage(`Unknown key sequence: ${keys}.`);
-        changeMode({ mode: "normal" });
+        changeMode({ mode: defaultMode });
       }
     }
   };
@@ -214,7 +200,7 @@ const replaceCharMode: Mode = {
     });
     textEditor.selections = newSelections;
 
-    changeMode({ mode: "normal" });
+    changeMode({ mode: defaultMode });
   },
 };
 
@@ -381,25 +367,19 @@ const normalKeyMap: KeyMap = [
   // Match mode (m)
   {
     keys: "m",
-    command: async function () {
-      changeMode({ mode: "match" });
-    },
+    leaveInMode: "match",
   },
 
   // Replace char mode (r)
   {
     keys: "r",
-    command: async function () {
-      changeMode({ mode: "replaceChar" });
-    },
+    leaveInMode: "replaceChar",
   },
 
   // Line select mode (v)
   {
     keys: "V",
-    command: async function () {
-      changeMode({ mode: "lineSelect" });
-    },
+    leaveInMode: "lineSelect",
   },
 ];
 
@@ -484,11 +464,6 @@ async function handleNonCharacterKey({ key }: { key: string }) {
   handleNonInsertKey(key, editor);
 }
 
-function initDefaultMode() {
-  const defaultMode = "normal";
-  changeMode({ mode: defaultMode });
-}
-
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("scuba.changeMode", changeMode)
@@ -511,7 +486,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   activateAdditionalCommands(context);
 
-  initDefaultMode();
+  changeMode({ mode: defaultMode });
 }
 
 function activateAdditionalCommands(context: vscode.ExtensionContext) {

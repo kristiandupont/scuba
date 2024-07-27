@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-
-const parseTreeExtension = vscode.extensions.getExtension("pokey.parse-tree");
+import { activateSmartSelectCommands } from "./smart-select-commands";
 
 let blockTypeSub: vscode.Disposable | null = null;
 let modeIndicator: vscode.StatusBarItem | null = null;
@@ -8,8 +7,36 @@ let currentMode: string | null = null;
 
 let activeCommandChain: string[] = [];
 
-async function changeMode({ mode }: { mode: string }) {
-  currentMode = mode;
+type Mode =
+  | {
+      isInsertMode: true;
+      name: string;
+      statusItemText: string;
+    }
+  | {
+      isInsertMode: false;
+      name: string;
+      statusItemText: string;
+      handleSubCommandChain: (
+        keys: string,
+        textEditor: vscode.TextEditor
+      ) => Promise<void>;
+    };
+
+const insertMode: Mode = {
+  isInsertMode: true,
+  name: "insert",
+  statusItemText: "Insert",
+};
+
+async function changeMode({ mode: modeName }: { mode: string }) {
+  const mode = modes.find((mode) => mode.name === modeName);
+  if (!mode) {
+    vscode.window.showErrorMessage(`Unknown mode: ${modeName}`);
+    return;
+  }
+
+  currentMode = modeName;
   resetCommandChain();
 
   vscode.commands.executeCommand(
@@ -19,12 +46,12 @@ async function changeMode({ mode }: { mode: string }) {
   );
   updateModeIndicator();
 
-  if (currentMode === "normal" && !blockTypeSub) {
+  if (!mode.isInsertMode && !blockTypeSub) {
     blockTypeSub = vscode.commands.registerTextEditorCommand(
       "type",
-      normalType
+      nonInsertType
     );
-  } else if (currentMode !== "normal" && !!blockTypeSub) {
+  } else if (mode.isInsertMode && !!blockTypeSub) {
     blockTypeSub.dispose();
     blockTypeSub = null;
   }
@@ -44,35 +71,124 @@ function resetCommandChain() {
   updateModeIndicator();
 }
 
-const rootMap = [
+async function moveAllCursorsRightUnlessTheyAreAtEOL(
+  textEditor: vscode.TextEditor
+) {
+  const selections = textEditor.selections;
+  const newSelections = selections.map((selection) => {
+    const position = selection.active;
+    const lineEnd = textEditor.document.lineAt(position.line).range.end;
+    if (!position.isEqual(lineEnd)) {
+      // Move the cursor for this selection one character to the right
+      const newPosition = position.translate(0, 1);
+      return new vscode.Selection(newPosition, newPosition);
+    }
+    return selection;
+  });
+  textEditor.selections = newSelections;
+}
+
+type KeyDefinition = {
+  keys: string;
+  command?: string | ((textEditor: vscode.TextEditor) => void);
+  args?: any;
+  leaveInMode?: string;
+};
+
+type KeyMap = KeyDefinition[];
+
+function makeSubChainHandler(keyMap: KeyMap, defaultLeaveInMode?: string) {
+  return async (keys: string, textEditor: vscode.TextEditor) => {
+    const keyDefinition = keyMap.find((root) => root.keys === keys);
+    if (keyDefinition) {
+      if (keyDefinition.command) {
+        if (typeof keyDefinition.command === "function") {
+          keyDefinition.command(textEditor);
+        } else {
+          vscode.commands.executeCommand(
+            keyDefinition.command,
+            keyDefinition.args
+          );
+        }
+      }
+      const leaveInMode = keyDefinition.leaveInMode || defaultLeaveInMode;
+      if (leaveInMode) {
+        changeMode({ mode: leaveInMode });
+      }
+      resetCommandChain();
+    }
+  };
+}
+
+const matchMode: Mode = {
+  isInsertMode: false,
+  name: "match",
+  statusItemText: "Match",
+
+  handleSubCommandChain: makeSubChainHandler(
+    [
+      { keys: "m", command: "editor.action.jumpToBracket" },
+
+      // Inside
+      { keys: 'i"', command: "extension.selectDoubleQuote" },
+      { keys: "i'", command: "extension.selectSingleQuote" },
+      { keys: "i(", command: "extension.selectParenthesis" },
+      { keys: "i[", command: "extension.selectSquareBrackets" },
+      { keys: "i{", command: "extension.selectCurlyBrackets" },
+      { keys: "i`", command: "extension.selectBackTick" },
+      { keys: "i<", command: "extension.selectAngleBrackets" },
+      {
+        keys: "iw",
+        command: async function () {
+          await vscode.commands.executeCommand("cursorWordStartLeft");
+          await vscode.commands.executeCommand("cursorWordEndRightSelect");
+        },
+      },
+      { keys: "iq", command: "extension.selectEitherQuote" },
+
+      // Around
+      { keys: "a(", command: "extension.selectParenthesisOuter" },
+      { keys: "a[", command: "extension.selectSquareBracketsOuter" },
+      { keys: "a{", command: "extension.selectCurlyBracketsOuter" },
+      { keys: "a<", command: "extension.selectInTag" },
+      {
+        keys: "aw",
+        command: async function () {
+          await vscode.commands.executeCommand("cursorWordStartLeft");
+          await vscode.commands.executeCommand("cursorWordEndRightSelect");
+        },
+      },
+    ],
+    "normal"
+  ),
+};
+
+const normalKeyMap: KeyMap = [
   {
     keys: "i",
-    command: async function () {
-      changeMode({ mode: "insert" });
-    },
+    leaveInMode: "insert",
   },
   {
     keys: "a",
-    command: async function () {
-      await vscode.commands.executeCommand("cursorRight");
-      changeMode({ mode: "insert" });
-    },
+    command: moveAllCursorsRightUnlessTheyAreAtEOL,
+    leaveInMode: "insert",
   },
   {
     keys: "o",
     command: async function () {
       await vscode.commands.executeCommand("editor.action.insertLineAfter");
-      changeMode({ mode: "insert" });
     },
+    leaveInMode: "insert",
   },
   {
     keys: "O",
     command: async function () {
       await vscode.commands.executeCommand("editor.action.insertLineBefore");
-      changeMode({ mode: "insert" });
     },
+    leaveInMode: "insert",
   },
   { keys: "u", command: "undo" },
+  { keys: "U", command: "redo" },
   { keys: "w", command: "cursorWordEndRightSelect" },
   { keys: "b", command: "cursorWordStartLeftSelect" },
   { keys: "y", command: "editor.action.clipboardCopyAction" },
@@ -87,66 +203,96 @@ const rootMap = [
       });
     },
   },
-  { keys: " m", command: "textmarker.toggleHighlight" },
-  { keys: "za", command: "editor.toggleFold" },
-  { keys: "gd", command: "editor.action.goToDeclaration" },
-  { keys: "gr", command: "references-view.findReferences" },
-  { keys: "gh", command: "editor.action.showHover" },
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
   { keys: "J", command: "editor.action.joinLines" },
-  { keys: 'mi"', command: "extension.selectDoubleQuote" },
-  { keys: "mi'", command: "extension.selectSingleQuote" },
-  { keys: "mi(", command: "extension.selectParenthesis" },
-  { keys: "mi[", command: "extension.selectSquareBrackets" },
-  { keys: "mi{", command: "extension.selectCurlyBrackets" },
-  { keys: "mi`", command: "extension.selectBackTick" },
-  { keys: "mi<", command: "extension.selectAngleBrackets" },
-  { keys: "ma'", command: "extension.selectEitherQuote" },
-  { keys: "ma(", command: "extension.selectParenthesisOuter" },
-  { keys: "ma[", command: "extension.selectSquareBracketsOuter" },
-  { keys: "ma{", command: "extension.selectCurlyBracketsOuter" },
-  { keys: "ma<", command: "extension.selectInTag" },
+  { keys: " m", command: "textmarker.toggleHighlight" },
+
+  // Goto mode (g)
+  { keys: "gd", command: "editor.action.goToDeclaration" },
+  { keys: "gr", command: "references-view.findReferences" },
+  { keys: "gh", command: "editor.action.showHover" },
+
+  // View mode (z)
+  { keys: "za", command: "editor.toggleFold" },
+  {
+    keys: "zz",
+    command: "revealLine",
+    args: {
+      lineNumber: vscode.window.activeTextEditor?.selection.active.line,
+      at: "center",
+    },
+  },
+
+  // Match mode (m)
+  {
+    keys: "m",
+    command: async function () {
+      changeMode({ mode: "match" });
+    },
+  },
 ];
+
+const normalMode: Mode = {
+  isInsertMode: false,
+  name: "normal",
+  statusItemText: "Normal",
+  handleSubCommandChain: makeSubChainHandler(normalKeyMap),
+};
+
+const modes: Mode[] = [insertMode, normalMode, matchMode];
 
 /*
 {
   "key": "shift+alt+right",
   "command": "cursorWordEndRightSelect",
   "when": "textInputFocus"
-}*/
+}
+*/
 
 function updateModeIndicator() {
   if (!modeIndicator) {
     return;
   }
 
-  const icon = currentMode === "insert" ? "edit" : "lock";
+  const icon = currentMode === "insert" ? "edit" : "keyboard";
 
   const commandChain =
-    activeCommandChain.length > 0 ? activeCommandChain.join("") : "$(keyboard)";
+    activeCommandChain.length > 0
+      ? activeCommandChain.join("")
+      : "$(star-empty)";
 
   modeIndicator.text = `$(${icon}) ${currentMode} ${commandChain}`;
 }
 
-async function normalType(
+async function handleNonInsertKey(
+  key: string,
+  textEditor: vscode.TextEditor,
+  edit: vscode.TextEditorEdit
+) {
+  activeCommandChain.push(key);
+  updateModeIndicator();
+
+  const mode = modes.find((mode) => mode.name === currentMode);
+  if (!mode) {
+    return;
+  }
+
+  if (mode.isInsertMode) {
+    return;
+  }
+
+  const command = activeCommandChain.join("");
+  await mode.handleSubCommandChain(command, textEditor);
+}
+
+async function nonInsertType(
   textEditor: vscode.TextEditor,
   edit: vscode.TextEditorEdit,
   ...args: any[]
 ) {
   const key = args[0].text;
-  activeCommandChain.push(key);
-  updateModeIndicator();
-  const command = activeCommandChain.join("");
-  const root = rootMap.find((root) => root.keys === command);
-  if (root) {
-    if (typeof root.command === "function") {
-      await root.command();
-    } else {
-      await vscode.commands.executeCommand(root.command, root.args);
-    }
-    resetCommandChain();
-  }
+  handleNonInsertKey(key, textEditor, edit);
 }
 
 function initDefaultMode() {
@@ -166,122 +312,22 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Left,
     0
   );
+  modeIndicator.show();
 
   activateAdditionalCommands(context);
 
-  modeIndicator.command = "scuba.change";
-  modeIndicator.show();
   initDefaultMode();
 }
 
 function activateAdditionalCommands(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.expandSelection", expandSelection)
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.selectNextSibling", () =>
-      selectSiblingNode("next")
-    )
-  );
-  context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.selectPrevSibling", () =>
-      selectSiblingNode("prev")
-    )
-  );
+  activateSmartSelectCommands(context);
 }
 
-async function getNodeAtCursor(editor: vscode.TextEditor) {
-  // Get the parse-tree API
-  if (!parseTreeExtension) {
-    throw new Error("Depends on pokey.parse-tree extension");
+export function deactivate() {
+  if (blockTypeSub) {
+    blockTypeSub.dispose();
   }
-  const { getTreeForUri } = await parseTreeExtension.activate();
-
-  const document = editor.document;
-  const selection = editor.selection;
-
-  // Create a range from the start and end of the selection
-  const range = new vscode.Range(selection.start, selection.end);
-
-  const location: vscode.Location = new vscode.Location(document.uri, range);
-
-  console.log("Location:", location.range.start, location.range.end);
-
-  // Get the parse tree for the current document
-  // let node = getNodeAtLocation(location);
-  let node = getTreeForUri(document.uri)?.rootNode.namedDescendantForPosition(
-    { row: location.range.start.line, column: location.range.start.character },
-    { row: location.range.end.line, column: location.range.end.character }
-  );
-
-  console.log(`node [${node.type}]: ${node.text}`);
-
-  return node;
-}
-
-async function expandSelection() {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return;
-  }
-
-  const node = await getNodeAtCursor(editor);
-  if (node) {
-    const parentNode = node.parent;
-    if (parentNode) {
-      const start = parentNode.startPosition;
-      const end = parentNode.endPosition;
-      editor.selection = new vscode.Selection(
-        start.row,
-        start.column,
-        end.row,
-        end.column
-      );
-    }
+  if (modeIndicator) {
+    modeIndicator.dispose();
   }
 }
-
-async function selectSiblingNode(direction: "next" | "prev") {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return;
-  }
-
-  let node = await getNodeAtCursor(editor);
-  if (!node) {
-    return;
-  }
-
-  while (
-    (direction === "next" && !node.nextNamedSibling) ||
-    (direction === "prev" && !node.previousNamedSibling)
-  ) {
-    console.log("no sibling for ", node.type, ": ", node.text);
-    node = node.parent;
-    if (!node) {
-      return;
-    }
-  }
-
-  node =
-    direction === "next" ? node.nextNamedSibling : node.previousNamedSibling;
-
-  if (!node) {
-    return;
-  }
-  console.log("sibling for ", node.type, ": ", node.text);
-
-  const start = node.startPosition;
-  const end = node.endPosition;
-  editor.selection = new vscode.Selection(
-    start.row,
-    start.column,
-    end.row,
-    end.column
-  );
-
-  console.log("New range: ", start, end);
-}
-
-export function deactivate() {}

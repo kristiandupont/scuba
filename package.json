@@ -38,12 +38,15 @@
         "args": {
           "mode": "normal"
         },
-        "when": "scuba.currentMode == 'insert'",
+        "when": "scuba.currentMode == 'insert' && !parameterHintsVisible && !suggestWidgetVisible",
         "key": "escape"
       },
       {
-        "command": "scuba.reset",
-        "when": "scuba.currentMode == 'normal'",
+        "command": "scuba.changeMode",
+        "args": {
+          "mode": "normal"
+        },
+        "when": "scuba.currentMode != 'insert'",
         "key": "escape"
       }
     ]

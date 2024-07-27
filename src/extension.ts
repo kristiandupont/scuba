@@ -22,6 +22,8 @@ export type Mode =
       isInsertMode: true;
       name: string;
       statusItemText: string;
+      color?: vscode.ThemeColor;
+      backgroundColor?: vscode.ThemeColor;
     }
   | {
       isInsertMode: false;
@@ -33,6 +35,8 @@ export type Mode =
       ) => Promise<void>;
       onEnter?: () => Promise<void>;
       onExit?: () => Promise<void>;
+      color?: vscode.ThemeColor;
+      backgroundColor?: vscode.ThemeColor;
     };
 
 export async function changeMode({ mode: modeName }: { mode: string }) {
@@ -150,15 +154,27 @@ function updateModeIndicator() {
   }
 
   const mode = modes.find((mode) => mode.name === currentMode);
+  if (!mode) {
+    return;
+  }
 
-  const icon = mode?.isInsertMode ? "edit" : "keyboard";
+  let text = "";
+  if (mode.isInsertMode) {
+    text = "$(edit) " + mode.name;
+  } else {
+    const commandChain =
+      activeCommandChain.length > 0
+        ? activeCommandChain.join("")
+        : "$(star-empty)";
 
-  const commandChain =
-    activeCommandChain.length > 0
-      ? activeCommandChain.join("")
-      : "$(star-empty)";
+    text = "$(keyboard) " + mode.name + " " + commandChain;
+  }
+  modeIndicator.text = text;
 
-  modeIndicator.text = `$(${icon}) ${mode?.statusItemText} ${commandChain}`;
+  modeIndicator.color =
+    mode.color || new vscode.ThemeColor("statusBar.foreground");
+  modeIndicator.backgroundColor =
+    mode.backgroundColor || new vscode.ThemeColor("statusBar.background");
 }
 
 async function handleNonInsertKey(

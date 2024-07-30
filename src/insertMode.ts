@@ -6,4 +6,5 @@ export const insertMode: Mode = {
   name: "insert",
   statusItemText: "Insert",
   color: new vscode.ThemeColor("editor.foreground"),
+  cursorStyle: vscode.TextEditorCursorStyle.Line,
 };

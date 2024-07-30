@@ -9,8 +9,12 @@ export const lineSelectMode: Mode = {
   color: new vscode.ThemeColor("editor.foreground"),
 
   onEnter: async function () {
-    await vscode.commands.executeCommand("cursorHome");
-    await vscode.commands.executeCommand("cursorHome");
+    // Move the cursor to the absolute column 0 of the current line
+    await vscode.commands.executeCommand("cursorMove", {
+      to: "wrappedLineStart",
+      by: "character",
+      value: 0,
+    });
     await vscode.commands.executeCommand("cursorDownSelect");
   },
 

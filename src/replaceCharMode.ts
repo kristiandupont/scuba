@@ -5,6 +5,7 @@ export const replaceCharMode: Mode = {
   isInsertMode: false,
   name: "replace-char",
   statusItemText: "Replace Char",
+  cursorStyle: vscode.TextEditorCursorStyle.Underline,
   handleSubCommandChain: async function (
     keys: string,
     textEditor: vscode.TextEditor

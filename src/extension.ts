@@ -8,6 +8,7 @@ import { replaceCharMode } from "./replaceCharMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { surroundMode } from "./surroundMode";
 import { sneakMode } from "./sneakMode";
+import { findCharMode, tillCharMode } from "./char-search-modes";
 
 export const defaultMode = "normal";
 
@@ -24,6 +25,7 @@ export type Mode =
       statusItemText: string;
       color?: vscode.ThemeColor;
       backgroundColor?: vscode.ThemeColor;
+      cursorStyle?: vscode.TextEditorCursorStyle;
     }
   | {
       isInsertMode: false;
@@ -37,6 +39,7 @@ export type Mode =
       onExit?: () => Promise<void>;
       color?: vscode.ThemeColor;
       backgroundColor?: vscode.ThemeColor;
+      cursorStyle?: vscode.TextEditorCursorStyle;
     };
 
 export async function changeMode({ mode: modeName }: { mode: string }) {
@@ -82,9 +85,7 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
     return;
   }
   vscode.window.activeTextEditor.options.cursorStyle =
-    currentMode === "insert"
-      ? vscode.TextEditorCursorStyle.Line
-      : vscode.TextEditorCursorStyle.Block;
+    mode.cursorStyle || vscode.TextEditorCursorStyle.Block;
 }
 
 export function resetCommandChain() {
@@ -146,6 +147,8 @@ const modes: Mode[] = [
   smartSelectMode,
   surroundMode,
   sneakMode,
+  findCharMode,
+  tillCharMode,
 ];
 
 function updateModeIndicator() {
@@ -160,14 +163,14 @@ function updateModeIndicator() {
 
   let text = "";
   if (mode.isInsertMode) {
-    text = "$(edit) " + mode.name;
+    text = "$(edit) " + mode.statusItemText;
   } else {
     const commandChain =
       activeCommandChain.length > 0
         ? activeCommandChain.join("")
         : "$(star-empty)";
 
-    text = "$(keyboard) " + mode.name + " " + commandChain;
+    text = "$(keyboard) " + mode.statusItemText + " " + commandChain;
   }
   modeIndicator.text = text;
 
@@ -223,9 +226,6 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("scuba.changeMode", changeMode)
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.reset", resetCommandChain)
-  );
-  context.subscriptions.push(
     vscode.commands.registerCommand(
       "scuba.handleNonCharacterKey",
       handleNonCharacterKey
@@ -241,7 +241,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   changeMode({ mode: defaultMode });
 
-  // Listen for selection changes
+  // Listen for selection changes with the mouse
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {

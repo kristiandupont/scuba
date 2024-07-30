@@ -67,8 +67,8 @@ const normalKeyMap: KeyMap = [
   { keys: "U", command: "redo" },
 
   // Scroll the window up or down one line:
-  { keys: "k", command: "scrollLineDown" },
-  { keys: "j", command: "scrollLineUp" },
+  { keys: "k", command: "scrollLineUp" },
+  { keys: "j", command: "scrollLineDown" },
 
   { keys: "w", command: "cursorWordEndRightSelect" },
   { keys: "b", command: "cursorWordStartLeftSelect" },
@@ -78,7 +78,10 @@ const normalKeyMap: KeyMap = [
 
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
-  // Todo: @ = insert cursor at next occurrence of word under cursor
+  { keys: "@", command: "editor.action.addSelectionToNextFindMatch" },
+
+  { keys: "f", leaveInMode: "find-char" },
+  { keys: "t", leaveInMode: "till-char" },
 
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },

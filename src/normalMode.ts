@@ -33,6 +33,7 @@ export const clipboardKeys: KeyMap = [
     keys: "S",
     leaveInMode: "surround",
   },
+  { keys: "gc", command: "editor.action.commentLine" },
 ];
 
 const normalKeyMap: KeyMap = [
@@ -70,8 +71,22 @@ const normalKeyMap: KeyMap = [
   { keys: "k", command: "scrollLineUp" },
   { keys: "j", command: "scrollLineDown" },
 
-  { keys: "w", command: "cursorWordEndRightSelect" },
-  { keys: "b", command: "cursorWordStartLeftSelect" },
+  {
+    keys: "w",
+    command: async function () {
+      await vscode.commands.executeCommand("cursorWordStartLeft");
+      await vscode.commands.executeCommand("cursorWordStartRight");
+      await vscode.commands.executeCommand("cursorWordEndRightSelect");
+    },
+  },
+  {
+    keys: "b",
+    command: async function () {
+      await vscode.commands.executeCommand("cursorWordStartRight");
+      await vscode.commands.executeCommand("cursorWordStartLeft");
+      await vscode.commands.executeCommand("cursorWordStartLeftSelect");
+    },
+  },
 
   { keys: "æ", command: "cursorWordPartRightSelect" },
   { keys: "ø", command: "cursorWordPartLeftSelect" },
@@ -85,7 +100,16 @@ const normalKeyMap: KeyMap = [
 
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },
+  { keys: " c", command: "textmarker.clearAllHighlight" },
   { keys: ",", command: "editor.action.insertCursorBelow" },
+  {
+    keys: ";",
+    command: async function () {
+      // Cancel selection, retaining multiple cursors
+      await vscode.commands.executeCommand("cursorWordStartRight");
+      await vscode.commands.executeCommand("cursorWordStartLeft");
+    },
+  },
 
   // Goto "mode" (g)
   { keys: "gd", command: "editor.action.goToDeclaration" },

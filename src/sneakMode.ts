@@ -18,7 +18,7 @@ export const sneakMode: Mode = {
         const nextOccurrence = textEditor.document
           .getText()
           .toLowerCase()
-          .indexOf(word, textEditor.document.offsetAt(selection.active));
+          .indexOf(word, textEditor.document.offsetAt(selection.active) + 1);
         if (nextOccurrence === -1) {
           return selection;
         }

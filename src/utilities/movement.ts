@@ -16,3 +16,17 @@ export async function moveCursorsRightUnlessTheyAreAtEOL(
   });
   textEditor.selections = newSelections;
 }
+
+export async function revealCursorIfOutsideViewport(
+  textEditor: vscode.TextEditor
+) {
+  const isCursorOutsideViewport = textEditor.selections.some((selection) => {
+    return !textEditor.visibleRanges.some((visibleRange) => {
+      return visibleRange.contains(selection);
+    });
+  });
+
+  if (isCursorOutsideViewport) {
+    textEditor.revealRange(textEditor.selection);
+  }
+}

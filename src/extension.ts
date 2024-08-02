@@ -245,7 +245,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
-        changeMode({ mode: "normal" });
+        changeMode({ mode: "insert" });
       }
     })
   );

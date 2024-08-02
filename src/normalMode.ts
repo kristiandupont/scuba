@@ -20,20 +20,58 @@ export const clipboardKeys: KeyMap = [
     leaveInMode: "normal",
   },
   {
+    keys: "P",
+    command: async function () {
+      await vscode.commands.executeCommand("cursorRight");
+      await vscode.commands.executeCommand(
+        "editor.action.clipboardPasteAction"
+      );
+    },
+  },
+  {
+    keys: "π",
+    command: async function () {
+      // Insert a newline and paste the clipboard contents
+      await vscode.commands.executeCommand("editor.action.insertLineAfter");
+      await vscode.commands.executeCommand("cursorHome");
+      await vscode.commands.executeCommand(
+        "editor.action.clipboardPasteAction"
+      );
+    },
+  },
+  {
     keys: "c",
     command: async function () {
       await vscode.commands.executeCommand("deleteRight");
+    },
+    leaveInMode: "insert",
+  },
+  {
+    keys: "C",
+    // Clear the whole line and leave the cursor in insert mode, on the
+    // character that matches indentation:
+    command: async function () {
+      await vscode.commands.executeCommand("cursorHome");
+      await vscode.commands.executeCommand("deleteAllRight");
       await vscode.commands.executeCommand("scuba.changeMode", {
         mode: "insert",
       });
     },
-    leaveInMode: "normal",
   },
   {
     keys: "S",
     leaveInMode: "surround",
   },
   { keys: "gc", command: "editor.action.commentLine" },
+  {
+    keys: "zz",
+    command: async function () {
+      await vscode.commands.executeCommand("revealLine", {
+        lineNumber: vscode.window.activeTextEditor?.selection.active.line,
+        at: "center",
+      });
+    },
+  },
 ];
 
 const normalKeyMap: KeyMap = [
@@ -113,19 +151,19 @@ const normalKeyMap: KeyMap = [
 
   // Goto "mode" (g)
   { keys: "gd", command: "editor.action.goToDeclaration" },
+  {
+    keys: "gn",
+    command: async function () {
+      // Split the editor right and go to the definition
+      await vscode.commands.executeCommand("workbench.action.splitEditorRight");
+      await vscode.commands.executeCommand("editor.action.goToDeclaration");
+    },
+  },
   { keys: "gr", command: "references-view.findReferences" },
   { keys: "gh", command: "editor.action.showHover" },
 
   // View "mode" (z)
   { keys: "za", command: "editor.toggleFold" },
-  {
-    keys: "zz",
-    command: "revealLine",
-    args: {
-      lineNumber: vscode.window.activeTextEditor?.selection.active.line,
-      at: "center",
-    },
-  },
 
   // Match mode (m)
   { keys: "m", leaveInMode: "match" },
@@ -139,7 +177,7 @@ const normalKeyMap: KeyMap = [
   // Smart select mode (s)
   { keys: "s", leaveInMode: "smart-select" },
 
-  { keys: "-", leaveInMode: "sneak" },
+  { keys: "  ", leaveInMode: "sneak" },
 
   ...clipboardKeys,
 ];

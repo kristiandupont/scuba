@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { revealCursorIfOutsideViewport } from "./utilities/movement";
 const parseTreeExtension = vscode.extensions.getExtension("pokey.parse-tree");
 
 async function getNodesAtCursors(editor: vscode.TextEditor) {
@@ -63,13 +64,21 @@ export async function selectSiblingNode(direction: "next" | "prev") {
 
 export function activateSmartSelectCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.selectNextSibling", () =>
-      selectSiblingNode("next")
-    )
+    vscode.commands.registerCommand("scuba.selectNextSibling", () => {
+      selectSiblingNode("next");
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        revealCursorIfOutsideViewport(editor);
+      }
+    })
   );
   context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.selectPrevSibling", () =>
-      selectSiblingNode("prev")
-    )
+    vscode.commands.registerCommand("scuba.selectPrevSibling", () => {
+      selectSiblingNode("prev");
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        revealCursorIfOutsideViewport(editor);
+      }
+    })
   );
 }

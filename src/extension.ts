@@ -95,7 +95,15 @@ export function resetCommandChain() {
 
 export type KeyDefinition = {
   keys: string;
-  command?: string | ((textEditor: vscode.TextEditor) => void);
+
+  /**
+   * The command to execute when the key sequence is matched.
+   * If the command is a function, it will be called with the text editor
+   * and should return the mode to leave in (if any).
+   */
+  command?:
+    | string
+    | ((textEditor: vscode.TextEditor) => Promise<string | void>);
   args?: any;
   leaveInMode?: string;
 };
@@ -109,9 +117,14 @@ export function makeSubChainHandler(
   return async (keys: string, textEditor: vscode.TextEditor) => {
     const keyDefinition = keyMap.find((root) => root.keys === keys);
     if (keyDefinition) {
+      let leaveInMode = keyDefinition.leaveInMode || defaultLeaveInMode;
+
       if (keyDefinition.command) {
         if (typeof keyDefinition.command === "function") {
-          keyDefinition.command(textEditor);
+          const leaveInOverride = await keyDefinition.command(textEditor);
+          if (leaveInOverride) {
+            leaveInMode = leaveInOverride;
+          }
         } else {
           vscode.commands.executeCommand(
             keyDefinition.command,
@@ -119,7 +132,6 @@ export function makeSubChainHandler(
           );
         }
       }
-      const leaveInMode = keyDefinition.leaveInMode || defaultLeaveInMode;
       if (leaveInMode) {
         changeMode({ mode: leaveInMode });
       }
@@ -245,7 +257,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
-        changeMode({ mode: "insert" });
+        // If we just positioned the cursor, leave in normal mode. If we selected
+        // text, enter line select mode.
+        if (e.selections.some((s) => s.isEmpty)) {
+          changeMode({ mode: "normal" });
+        } else {
+          changeMode({ mode: "insert" });
+        }
       }
     })
   );

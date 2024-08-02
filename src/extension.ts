@@ -103,7 +103,10 @@ export type KeyDefinition = {
    */
   command?:
     | string
-    | ((textEditor: vscode.TextEditor) => Promise<string | void>);
+    | ((
+        count: number,
+        textEditor: vscode.TextEditor
+      ) => Promise<string | void>);
   args?: any;
   leaveInMode?: string;
 };
@@ -115,21 +118,35 @@ export function makeSubChainHandler(
   defaultLeaveInMode?: string
 ) {
   return async (keys: string, textEditor: vscode.TextEditor) => {
+    let count = 1;
+
+    // If keys begin with a number, that is the count. The command is the rest.
+    const countMatch = keys.match(/^\d+/);
+    if (countMatch) {
+      count = parseInt(countMatch[0], 10);
+      keys = keys.slice(countMatch[0].length);
+    }
+
     const keyDefinition = keyMap.find((root) => root.keys === keys);
     if (keyDefinition) {
       let leaveInMode = keyDefinition.leaveInMode || defaultLeaveInMode;
 
       if (keyDefinition.command) {
         if (typeof keyDefinition.command === "function") {
-          const leaveInOverride = await keyDefinition.command(textEditor);
+          const leaveInOverride = await keyDefinition.command(
+            count,
+            textEditor
+          );
           if (leaveInOverride) {
             leaveInMode = leaveInOverride;
           }
         } else {
-          vscode.commands.executeCommand(
-            keyDefinition.command,
-            keyDefinition.args
-          );
+          for (let i = 0; i < count; i++) {
+            vscode.commands.executeCommand(
+              keyDefinition.command,
+              keyDefinition.args
+            );
+          }
         }
       }
       if (leaveInMode) {

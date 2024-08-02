@@ -15,7 +15,7 @@ function makeCharSearchHandler(
     const newSelections = textEditor.selections.map((selection) => {
       const nextOccurrence = textEditor.document
         .getText()
-        .indexOf(char, textEditor.document.offsetAt(selection.active));
+        .indexOf(char, textEditor.document.offsetAt(selection.active) + 1);
       if (nextOccurrence === -1) {
         return selection;
       }

@@ -1,32 +1,22 @@
 import * as vscode from "vscode";
 
 export async function moveCursorsRightUnlessTheyAreAtEOL(
+  count: number,
   textEditor: vscode.TextEditor
 ) {
   const selections = textEditor.selections;
   const newSelections = selections.map((selection) => {
-    const position = selection.active;
+    let position = selection.active;
     const lineEnd = textEditor.document.lineAt(position.line).range.end;
-    if (!position.isEqual(lineEnd)) {
-      // Move the cursor for this selection one character to the right
-      const newPosition = position.translate(0, 1);
-      return new vscode.Selection(newPosition, newPosition);
+
+    for (let i = 0; i < count; i++) {
+      if (position.isEqual(lineEnd)) {
+        break; // Stop if the cursor is at the end of the line
+      }
+      position = position.translate(0, 1); // Move the cursor one character to the right
     }
-    return selection;
+
+    return new vscode.Selection(position, position);
   });
   textEditor.selections = newSelections;
-}
-
-export async function revealCursorIfOutsideViewport(
-  textEditor: vscode.TextEditor
-) {
-  const isCursorOutsideViewport = textEditor.selections.some((selection) => {
-    return !textEditor.visibleRanges.some((visibleRange) => {
-      return visibleRange.contains(selection);
-    });
-  });
-
-  if (isCursorOutsideViewport) {
-    textEditor.revealRange(textEditor.selection);
-  }
 }

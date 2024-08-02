@@ -26,6 +26,14 @@
       {
         "command": "scuba.selectPrevSibling",
         "title": "Scuba: Select previous sibling"
+      },
+      {
+        "command": "scuba.selectFirstParameter",
+        "title": "Scuba: Select first parameter in function definition"
+      },
+      {
+        "command": "scuba.selectJSXTag",
+        "title": "Scuba: Select JSX tag"
       }
     ],
     "keybindings": [

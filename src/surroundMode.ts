@@ -117,9 +117,7 @@ export const surroundMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    if (keys === "a") {
-      // Wait for the next key
-    } else if (keys === "r") {
+    if (keys === "a" || keys === "r") {
       // Wait for the next key
     } else if (keys.length === 2 && keys[0] === "a") {
       surroundWith(textEditor, keys[1] as SurroundKey);

@@ -41,9 +41,7 @@ export const clipboardKeys: KeyMap = [
   },
   {
     keys: "c",
-    command: async function () {
-      await vscode.commands.executeCommand("deleteRight");
-    },
+    command: "deleteRight",
     leaveInMode: "insert",
   },
   {
@@ -59,7 +57,7 @@ export const clipboardKeys: KeyMap = [
     },
   },
   {
-    keys: "S",
+    keys: "s",
     leaveInMode: "surround",
   },
   { keys: "gc", command: "editor.action.commentLine" },
@@ -111,18 +109,22 @@ const normalKeyMap: KeyMap = [
 
   {
     keys: "w",
-    command: async function () {
-      await vscode.commands.executeCommand("cursorWordStartLeft");
-      await vscode.commands.executeCommand("cursorWordStartRight");
-      await vscode.commands.executeCommand("cursorWordEndRightSelect");
+    command: async function (count: number) {
+      for (let i = 0; i < count; i++) {
+        await vscode.commands.executeCommand("cursorWordStartLeft");
+        await vscode.commands.executeCommand("cursorWordStartRight");
+        await vscode.commands.executeCommand("cursorWordEndRightSelect");
+      }
     },
   },
   {
     keys: "b",
-    command: async function () {
-      await vscode.commands.executeCommand("cursorWordStartRight");
-      await vscode.commands.executeCommand("cursorWordStartLeft");
-      await vscode.commands.executeCommand("cursorWordStartLeftSelect");
+    command: async function (count: number) {
+      for (let i = 0; i < count; i++) {
+        await vscode.commands.executeCommand("cursorWordStartRight");
+        await vscode.commands.executeCommand("cursorWordStartLeft");
+        await vscode.commands.executeCommand("cursorWordStartLeftSelect");
+      }
     },
   },
 
@@ -147,6 +149,10 @@ const normalKeyMap: KeyMap = [
       await vscode.commands.executeCommand("cursorWordStartRight");
       await vscode.commands.executeCommand("cursorWordStartLeft");
     },
+  },
+  {
+    keys: "x",
+    command: "deleteRight",
   },
 
   // Goto "mode" (g)
@@ -175,7 +181,7 @@ const normalKeyMap: KeyMap = [
   { keys: "V", leaveInMode: "line-select" },
 
   // Smart select mode (s)
-  { keys: "s", leaveInMode: "smart-select" },
+  { keys: "S", leaveInMode: "smart-select" },
 
   { keys: "  ", leaveInMode: "sneak" },
 

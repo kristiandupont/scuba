@@ -32,8 +32,12 @@
         "title": "Scuba: Select first parameter in function definition"
       },
       {
-        "command": "scuba.selectJSXTag",
-        "title": "Scuba: Select JSX tag"
+        "command": "scuba.selectElement",
+        "title": "Scuba: Select HTML/JSX tag"
+      },
+      {
+        "command": "scuba.selectTagName",
+        "title": "Scuba: Select HTML/JSX tag name"
       }
     ],
     "keybindings": [

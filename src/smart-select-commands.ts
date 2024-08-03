@@ -126,33 +126,32 @@ async function selectFirstParameter() {
 }
 
 function isFunctionDefinition(node: any): boolean {
-  // Check if the node is a function definition
-  // This should be adapted to the specific Tree-sitter grammar being used
   return [
     "function_definition",
     "function_declaration",
     "method_definition",
+    "arrow_function",
   ].includes(node.type);
 }
 
 function isParametersNode(node: any): boolean {
-  // Check if the node is a parameters node
-  // This should be adapted to the specific Tree-sitter grammar being used
   return ["parameters", "formal_parameters"].includes(node.type);
 }
 
 function isParameterNode(node: any): boolean {
-  // Check if the node is a parameter node
-  // This should be adapted to the specific Tree-sitter grammar being used
   return [
     "parameter",
     "typed_parameter",
     "required_parameter",
+    "typed_required_parameter",
+    "default_parameter",
+    "typed_default_parameter",
     "optional_parameter",
+    "typed_optional_parameter",
   ].includes(node.type);
 }
 
-async function selectJSXTag() {
+async function selectElement() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
@@ -162,12 +161,12 @@ async function selectJSXTag() {
   const newSelections = nodes
     .map((node) => {
       // Trace upwards to find the nearest JSX tag
-      while (node.parent && !isJSXElement(node)) {
+      while (node.parent && !isTagElement(node)) {
         node = node.parent;
       }
 
       // If we didn't find a JSX element, return null
-      if (!isJSXElement(node)) {
+      if (!isTagElement(node)) {
         return null;
       }
 
@@ -182,10 +181,78 @@ async function selectJSXTag() {
   editor.revealRange(editor.selection);
 }
 
-function isJSXElement(node: any): boolean {
-  // Check if the node is a JSX element
+function isTagElement(node: any): boolean {
+  // Check if the node is a JSX or HTML element
   // This should be adapted to the specific Tree-sitter grammar being used
-  return ["jsx_element", "jsx_self_closing_element"].includes(node.type);
+  return [
+    // JSX types
+    "jsx_element",
+    "jsx_self_closing_element",
+    // HTML types
+    "element",
+    "self_closing_tag",
+  ].includes(node.type);
+}
+
+// Create two selections per cursor: one that selects the name part of the opening tag
+// and one that selects the name part of the closing tag:
+async function selectTagName() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  let nodes = await getNodesAtCursors(editor);
+  const newSelections = nodes
+    .flatMap((node) => {
+      // Trace upwards to find the nearest JSX tag
+      while (node.parent && !isTagElement(node)) {
+        node = node.parent;
+      }
+
+      if (!isTagElement(node)) {
+        return [];
+      }
+
+      if (node.type === "jsx_self_closing_element") {
+        const namePart = node.children[1];
+        if (!namePart) {
+          return [];
+        }
+
+        const start = namePart.startPosition;
+        const end = namePart.endPosition;
+        return [
+          new vscode.Selection(start.row, start.column, end.row, end.column),
+        ];
+      }
+
+      const openingTag = node.children[0];
+      const closingTag = node.children[node.children.length - 1];
+
+      return [openingTag, closingTag].map((node: any) => {
+        if (!node) {
+          return null;
+        }
+        const namePart = node.children[1];
+        if (!namePart) {
+          return null;
+        }
+
+        const start = namePart.startPosition;
+        const end = namePart.endPosition;
+        return new vscode.Selection(
+          start.row,
+          start.column,
+          end.row,
+          end.column
+        );
+      });
+    })
+    .filter((selection) => selection) as vscode.Selection[];
+
+  editor.selections = newSelections;
+  editor.revealRange(editor.selection);
 }
 
 export function activateSmartSelectCommands(context: vscode.ExtensionContext) {
@@ -200,6 +267,7 @@ export function activateSmartSelectCommands(context: vscode.ExtensionContext) {
       "scuba.selectFirstParameter",
       selectFirstParameter
     ),
-    vscode.commands.registerCommand("scuba.selectJSXTag", selectJSXTag)
+    vscode.commands.registerCommand("scuba.selectElement", selectElement),
+    vscode.commands.registerCommand("scuba.selectTagName", selectTagName)
   );
 }

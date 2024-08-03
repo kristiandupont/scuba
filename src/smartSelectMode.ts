@@ -15,7 +15,8 @@ export const smartSelectMode: Mode = {
     { keys: "<left>", command: "editor.action.smartSelect.shrink" },
     { keys: "<right>", command: "editor.action.smartSelect.expand" },
     { keys: "p", command: "scuba.selectFirstParameter" },
-    { keys: "t", command: "scuba.selectJSXTag" },
+    { keys: "t", command: "scuba.selectElement" },
+    { keys: "r", command: "scuba.selectTagName", leaveInMode: "insert" },
     ...clipboardKeys,
   ]),
 };

@@ -1,7 +1,12 @@
 {
-  "name": "scuba",
-  "displayName": "scuba",
+  "name": "scuba-modal",
+  "displayName": "Scuba Modal",
+  "publisher": "KristianDupont",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristiandupont/scuba"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.91.0"
@@ -11,7 +16,8 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "*"
+    "onStartupFinished",
+    "onCommand:type"
   ],
   "contributes": {
     "commands": [
@@ -111,6 +117,8 @@
     "@vscode/test-electron": "^2.4.0"
   },
   "extensionDependencies": [
-    "pokey.parse-tree"
+    "pokey.parse-tree",
+    "mksafi.find-word-at-cursor",
+    "ryu1kn.text-marker"
   ]
 }

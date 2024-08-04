@@ -19,58 +19,60 @@ function makePairedMotionMatcher(
   mode: "inside" | "around"
 ) {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
-    const line = doc.lineAt(s.active.line);
-    const lineText = line.text;
-    const cursorPosition = s.active.character;
+    const cursorPosition = s.active;
+    let start: vscode.Position | null = null;
+    let end: vscode.Position | null = null;
+    let nestingLevel = 0;
 
-    let start = -1;
-    let end = -1;
-
-    if (mode === "inside") {
-      // Search backwards for opening quote
-      for (let i = cursorPosition; i > 0; i--) {
-        if (lineText[i - 1] === left) {
-          start = i;
-          break;
+    // Search backwards for opening character
+    for (let line = cursorPosition.line; line >= 0; line--) {
+      const lineText = doc.lineAt(line).text;
+      for (
+        let char =
+          line === cursorPosition.line
+            ? cursorPosition.character
+            : lineText.length - 1;
+        char >= 0;
+        char--
+      ) {
+        if (lineText[char] === right) nestingLevel++;
+        if (lineText[char] === left) {
+          if (nestingLevel === 0) {
+            start = new vscode.Position(
+              line,
+              char + (mode === "inside" ? 1 : 0)
+            );
+            break;
+          }
+          nestingLevel--;
         }
       }
-
-      // Search forwards for closing quote
-      for (let i = cursorPosition; i < lineText.length; i++) {
-        if (lineText[i] === right) {
-          end = i;
-          break;
-        }
-      }
-    } else if (mode === "around") {
-      // Search backwards for opening quote
-      for (let i = cursorPosition; i >= 0; i--) {
-        if (lineText[i] === left) {
-          start = i;
-          break;
-        }
-      }
-
-      // Search forwards for closing quote
-      for (let i = cursorPosition; i < lineText.length - 1; i++) {
-        if (lineText[i + 1] === right) {
-          end = i;
-          break;
-        }
-      }
-
-      if (start !== -1 && end !== -1) {
-        start++;
-        end++;
-      }
+      if (start) break;
     }
 
-    if (start !== -1 && end !== -1) {
-      const range = new vscode.Range(
-        new vscode.Position(s.active.line, start),
-        new vscode.Position(s.active.line, end)
-      );
-      return [range];
+    nestingLevel = 0;
+    // Search forwards for closing character
+    for (let line = cursorPosition.line; line < doc.lineCount; line++) {
+      const lineText = doc.lineAt(line).text;
+      for (
+        let char = line === cursorPosition.line ? cursorPosition.character : 0;
+        char < lineText.length;
+        char++
+      ) {
+        if (lineText[char] === left) nestingLevel++;
+        if (lineText[char] === right) {
+          if (nestingLevel === 0) {
+            end = new vscode.Position(line, char + (mode === "around" ? 1 : 0));
+            break;
+          }
+          nestingLevel--;
+        }
+      }
+      if (end) break;
+    }
+
+    if (start && end) {
+      return [new vscode.Range(start, end)];
     }
 
     return [];
@@ -82,70 +84,82 @@ function makeNarrowestPairMotionMatcher(
   mode: "inside" | "around"
 ) {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
-    const line = doc.lineAt(s.active.line);
-    const lineText = line.text;
-    const cursorPosition = s.active.character;
+    const cursorPosition = s.active;
+    let narrowestRange: vscode.Range | null = null;
 
-    let start = -1;
-    let end = -1;
+    for (const [left, right] of pairs) {
+      let start: vscode.Position | null = null;
+      let end: vscode.Position | null = null;
+      let nestingLevel = 0;
 
-    if (mode === "inside") {
-      for (const [left, right] of pairs) {
-        // Search backwards for opening character
-        for (let i = cursorPosition; i > 0; i--) {
-          if (lineText[i - 1] === left) {
-            start = i;
-            break;
+      // Search backwards for opening character
+      for (let line = cursorPosition.line; line >= 0; line--) {
+        const lineText = doc.lineAt(line).text;
+        for (
+          let char =
+            line === cursorPosition.line
+              ? cursorPosition.character
+              : lineText.length - 1;
+          char >= 0;
+          char--
+        ) {
+          if (lineText[char] === right) nestingLevel++;
+          if (lineText[char] === left) {
+            if (nestingLevel === 0) {
+              start = new vscode.Position(
+                line,
+                char + (mode === "inside" ? 1 : 0)
+              );
+              break;
+            }
+            nestingLevel--;
           }
         }
-
-        // Search forwards for closing character
-        for (let i = cursorPosition; i < lineText.length; i++) {
-          if (lineText[i] === right) {
-            end = i;
-            break;
-          }
-        }
-
-        if (start !== -1 && end !== -1) {
-          break;
-        }
+        if (start) break;
       }
-    } else if (mode === "around") {
-      for (const [left, right] of pairs) {
-        // Search backwards for opening character
-        for (let i = cursorPosition; i >= 0; i--) {
-          if (lineText[i] === left) {
-            start = i;
-            break;
+
+      nestingLevel = 0;
+      // Search forwards for closing character
+      for (let line = cursorPosition.line; line < doc.lineCount; line++) {
+        const lineText = doc.lineAt(line).text;
+        for (
+          let char =
+            line === cursorPosition.line ? cursorPosition.character : 0;
+          char < lineText.length;
+          char++
+        ) {
+          if (lineText[char] === left) nestingLevel++;
+          if (lineText[char] === right) {
+            if (nestingLevel === 0) {
+              end = new vscode.Position(
+                line,
+                char + (mode === "around" ? 1 : 0)
+              );
+              break;
+            }
+            nestingLevel--;
           }
         }
+        if (end) break;
+      }
 
-        // Search forwards for closing character
-        for (let i = cursorPosition; i < lineText.length - 1; i++) {
-          if (lineText[i + 1] === right) {
-            end = i;
-            break;
-          }
-        }
-
-        if (start !== -1 && end !== -1) {
-          start++;
-          end++;
-          break;
+      if (start && end) {
+        const range = new vscode.Range(start, end);
+        if (
+          !narrowestRange ||
+          range.end.line - range.start.line <
+            narrowestRange.end.line - narrowestRange.start.line ||
+          (range.end.line === narrowestRange.end.line &&
+            range.start.line === narrowestRange.start.line &&
+            range.end.character - range.start.character <
+              narrowestRange.end.character - narrowestRange.start.character)
+        ) {
+          narrowestRange = range;
         }
       }
     }
 
-    if (start !== -1 && end !== -1) {
-      const range = new vscode.Range(
-        new vscode.Position(s.active.line, start),
-        new vscode.Position(s.active.line, end)
-      );
-      return [range];
-    }
-
-    return [];
+    return narrowestRange ? [narrowestRange] : [];
   };
 }
 
@@ -294,8 +308,7 @@ export const visualMode: Mode = {
   isInsertMode: false,
   name: "visual",
   statusItemText: "Visual",
-  color: new vscode.ThemeColor("editor.selectionBackground"),
-  cursorStyle: vscode.TextEditorCursorStyle.Line,
+  color: new vscode.ThemeColor("editor.foreground"),
 
   onEnter: async function () {
     vscode.commands.executeCommand("cursorRightSelect");
@@ -308,8 +321,13 @@ export const visualMode: Mode = {
     const motion = motions.find((m) => m.keys === keys);
     if (motion) {
       await select(motion, textEditor);
+      changeMode({ mode: defaultMode });
     } else {
-      return visualSubChainHandler(keys, textEditor);
+      const partialMatch = motions.some((m) => m.keys.startsWith(keys));
+      if (!partialMatch) {
+        // Not a motion. Try with the fallback visual sub-chain handler.
+        return visualSubChainHandler(keys, textEditor);
+      }
     }
   },
 };

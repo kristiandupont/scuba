@@ -14,11 +14,12 @@ export const sneakMode: Mode = {
     } else if (keys.length === 2) {
       const word = keys.toLowerCase();
       // Find the next occurrence of the word from each cursor:
+      const searchText = textEditor.document.getText().toLowerCase();
       const newSelections = textEditor.selections.map((selection) => {
-        const nextOccurrence = textEditor.document
-          .getText()
-          .toLowerCase()
-          .indexOf(word, textEditor.document.offsetAt(selection.active) + 1);
+        const nextOccurrence = searchText.indexOf(
+          word,
+          textEditor.document.offsetAt(selection.active) + 1
+        );
         if (nextOccurrence === -1) {
           return selection;
         }

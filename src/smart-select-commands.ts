@@ -4,6 +4,9 @@ const parseTreeExtension = vscode.extensions.getExtension("pokey.parse-tree");
 async function getNodesAtCursors(editor: vscode.TextEditor) {
   // Get the parse-tree API
   if (!parseTreeExtension) {
+    const allExtensions = vscode.extensions.all;
+    const extensionIds = allExtensions.map((ext) => ext.id);
+    console.log("All extensions:", extensionIds);
     throw new Error("Depends on pokey.parse-tree extension");
   }
   const { getTreeForUri } = await parseTreeExtension.activate();

@@ -1,23 +1,63 @@
 import * as vscode from "vscode";
-import { KeyMap, makeSubChainHandler, Mode } from "./extension";
+import { defaultMode, KeyMap, makeSubChainHandler, Mode } from "./extension";
 import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
+import {
+  changeObjectMode,
+  deleteObjectMode,
+  visualMode,
+  yankObjectMode,
+} from "./verb-object-modes";
+import { matchMode } from "./matchMode";
+import { replaceCharMode } from "./replaceCharMode";
+import { lineSelectMode } from "./lineSelectMode";
+import { smartSelectMode } from "./smartSelectMode";
+import { sneakMode } from "./sneakMode";
+import { insertMode } from "./insertMode";
 
-export const clipboardKeys: KeyMap = [
+const normalKeyMap: KeyMap = [
+  { keys: "<up>", command: "cursorUp" },
+  { keys: "<down>", command: "cursorDown" },
+  { keys: "<left>", command: "cursorLeft" },
+  { keys: "<right>", command: "cursorRight" },
+
+  { keys: "^", command: "cursorLineStartSelect" },
+  { keys: "$", command: "cursorLineEndSelect" },
+
+  { keys: "i", leaveInMode: "insert" },
+  { keys: "I", command: "cursorHome", leaveInMode: insertMode.name },
   {
-    keys: "y",
-    command: "editor.action.clipboardCopyAction",
-    leaveInMode: "normal",
+    keys: "a",
+    command: moveCursorsRightUnlessTheyAreAtEOL,
+    leaveInMode: insertMode.name,
+  },
+  { keys: "A", command: "cursorEnd", leaveInMode: insertMode.name },
+  {
+    keys: "o",
+    command: "editor.action.insertLineAfter",
+    leaveInMode: insertMode.name,
   },
   {
-    keys: "d",
-    command: "editor.action.clipboardCutAction",
-    leaveInMode: "normal",
+    keys: "O",
+    command: "editor.action.insertLineBefore",
+    leaveInMode: insertMode.name,
   },
-  { keys: "D", command: "deleteAllRight", leaveInMode: "normal" },
+  {
+    keys: "C",
+    // Clear the whole line and leave the cursor in insert mode, on the
+    // character that matches indentation:
+    command: async function () {
+      await vscode.commands.executeCommand("cursorHome");
+      await vscode.commands.executeCommand("deleteAllRight");
+      await vscode.commands.executeCommand("scuba.changeMode", {
+        mode: insertMode.name,
+      });
+    },
+  },
+  { keys: "D", command: "deleteAllRight", leaveInMode: defaultMode },
   {
     keys: "p",
     command: "editor.action.clipboardPasteAction",
-    leaveInMode: "normal",
+    leaveInMode: defaultMode,
   },
   {
     keys: "P",
@@ -39,66 +79,6 @@ export const clipboardKeys: KeyMap = [
       );
     },
   },
-  {
-    keys: "c",
-    command: "deleteRight",
-    leaveInMode: "insert",
-  },
-  {
-    keys: "C",
-    // Clear the whole line and leave the cursor in insert mode, on the
-    // character that matches indentation:
-    command: async function () {
-      await vscode.commands.executeCommand("cursorHome");
-      await vscode.commands.executeCommand("deleteAllRight");
-      await vscode.commands.executeCommand("scuba.changeMode", {
-        mode: "insert",
-      });
-    },
-  },
-  {
-    keys: "s",
-    leaveInMode: "surround",
-  },
-  { keys: "gc", command: "editor.action.commentLine" },
-  {
-    keys: "zz",
-    command: async function () {
-      await vscode.commands.executeCommand("revealLine", {
-        lineNumber: vscode.window.activeTextEditor?.selection.active.line,
-        at: "center",
-      });
-    },
-  },
-];
-
-const normalKeyMap: KeyMap = [
-  { keys: "<up>", command: "cursorUp" },
-  { keys: "<down>", command: "cursorDown" },
-  { keys: "<left>", command: "cursorLeft" },
-  { keys: "<right>", command: "cursorRight" },
-
-  { keys: "^", command: "cursorLineStartSelect" },
-  { keys: "$", command: "cursorLineEndSelect" },
-
-  { keys: "i", leaveInMode: "insert" },
-  { keys: "I", command: "cursorHome", leaveInMode: "insert" },
-  {
-    keys: "a",
-    command: moveCursorsRightUnlessTheyAreAtEOL,
-    leaveInMode: "insert",
-  },
-  { keys: "A", command: "cursorEnd", leaveInMode: "insert" },
-  {
-    keys: "o",
-    command: "editor.action.insertLineAfter",
-    leaveInMode: "insert",
-  },
-  {
-    keys: "O",
-    command: "editor.action.insertLineBefore",
-    leaveInMode: "insert",
-  },
 
   { keys: "u", command: "undo" },
   { keys: "U", command: "redo" },
@@ -109,34 +89,22 @@ const normalKeyMap: KeyMap = [
 
   {
     keys: "w",
-    command: async function (count: number) {
-      for (let i = 0; i < count; i++) {
-        await vscode.commands.executeCommand("cursorWordStartLeft");
-        await vscode.commands.executeCommand("cursorWordStartRight");
-        await vscode.commands.executeCommand("cursorWordEndRightSelect");
-      }
-    },
+    command: "cursorWordStartRight",
   },
   {
     keys: "b",
-    command: async function (count: number) {
-      for (let i = 0; i < count; i++) {
-        await vscode.commands.executeCommand("cursorWordStartRight");
-        await vscode.commands.executeCommand("cursorWordStartLeft");
-        await vscode.commands.executeCommand("cursorWordStartLeftSelect");
-      }
-    },
+    command: "cursorWordStartLeft",
   },
 
-  { keys: "æ", command: "cursorWordPartRightSelect" },
-  { keys: "ø", command: "cursorWordPartLeftSelect" },
+  { keys: "æ", command: "cursorWordPartRight" },
+  { keys: "ø", command: "cursorWordPartLeft" },
 
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
   { keys: "@", command: "editor.action.addSelectionToNextFindMatch" },
 
-  { keys: "f", leaveInMode: "find-char" },
-  { keys: "t", leaveInMode: "till-char" },
+  { keys: "f", leaveInMode: "find-char/inclusive" },
+  { keys: "t", leaveInMode: "find-char/exclusive" },
 
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },
@@ -167,25 +135,38 @@ const normalKeyMap: KeyMap = [
   },
   { keys: "gr", command: "references-view.findReferences" },
   { keys: "gh", command: "editor.action.showHover" },
+  { keys: "gc", command: "editor.action.commentLine" },
 
   // View "mode" (z)
+  {
+    keys: "zz",
+    command: async function () {
+      await vscode.commands.executeCommand("revealLine", {
+        lineNumber: vscode.window.activeTextEditor?.selection.active.line,
+        at: "center",
+      });
+    },
+  },
   { keys: "za", command: "editor.toggleFold" },
 
+  { keys: "v", leaveInMode: visualMode.name },
+  { keys: "c", leaveInMode: changeObjectMode.name },
+  { keys: "y", leaveInMode: yankObjectMode.name },
+  { keys: "d", leaveInMode: deleteObjectMode.name },
+
   // Match mode (m)
-  { keys: "m", leaveInMode: "match" },
+  { keys: "m", leaveInMode: matchMode.name },
 
   // Replace char mode (r)
-  { keys: "r", leaveInMode: "replace-char" },
+  { keys: "r", leaveInMode: replaceCharMode.name },
 
   // Line select mode (v)
-  { keys: "V", leaveInMode: "line-select" },
+  { keys: "V", leaveInMode: lineSelectMode.name },
 
   // Smart select mode (s)
-  { keys: "S", leaveInMode: "smart-select" },
+  { keys: "S", leaveInMode: smartSelectMode.name },
 
-  { keys: "  ", leaveInMode: "sneak" },
-
-  ...clipboardKeys,
+  { keys: "  ", leaveInMode: sneakMode.name },
 ];
 
 export const normalMode: Mode = {

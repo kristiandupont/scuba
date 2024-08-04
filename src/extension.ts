@@ -8,6 +8,12 @@ import { replaceCharMode } from "./replaceCharMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { surroundMode } from "./surroundMode";
 import { sneakMode } from "./sneakMode";
+import {
+  changeObjectMode as changeObjectMode,
+  deleteObjectMode,
+  visualMode,
+  yankObjectMode,
+} from "./verb-object-modes";
 import { findCharMode, tillCharMode } from "./char-search-modes";
 
 export const defaultMode = "normal";
@@ -170,6 +176,10 @@ export function makeSubChainHandler(
 const modes: Mode[] = [
   insertMode,
   normalMode,
+  changeObjectMode,
+  yankObjectMode,
+  deleteObjectMode,
+  visualMode,
   matchMode,
   replaceCharMode,
   lineSelectMode,
@@ -277,9 +287,9 @@ export function activate(context: vscode.ExtensionContext) {
         // If we just positioned the cursor, leave in normal mode. If we selected
         // text, enter line select mode.
         if (e.selections.some((s) => s.isEmpty)) {
-          changeMode({ mode: "normal" });
+          changeMode({ mode: normalMode.name });
         } else {
-          changeMode({ mode: "insert" });
+          changeMode({ mode: insertMode.name });
         }
       }
     })
@@ -288,7 +298,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Listen for active editor changes
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {
-      changeMode({ mode: "normal" });
+      changeMode({ mode: defaultMode });
     })
   );
 }

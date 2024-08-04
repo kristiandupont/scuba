@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
-import { clipboardKeys } from "./normalMode";
+import { sharedSelectionKeys } from "./sharedSelectionKeys";
 
 export const lineSelectMode: Mode = {
   isInsertMode: false,
@@ -21,6 +21,6 @@ export const lineSelectMode: Mode = {
   handleSubCommandChain: makeSubChainHandler([
     { keys: "<up>", command: "cursorUpSelect" },
     { keys: "<down>", command: "cursorDownSelect" },
-    ...clipboardKeys,
+    ...sharedSelectionKeys,
   ]),
 };

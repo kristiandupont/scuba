@@ -103,7 +103,9 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/vscode": "^1.91.0",
@@ -116,9 +118,5 @@
     "@vscode/test-cli": "^0.0.9",
     "@vscode/test-electron": "^2.4.0"
   },
-  "extensionDependencies": [
-    "pokey.parse-tree",
-    "mksafi.find-word-at-cursor",
-    "ryu1kn.text-marker"
-  ]
+  "extensionDependencies": []
 }

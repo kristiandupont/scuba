@@ -11,7 +11,7 @@ import { sneakMode } from "./sneakMode";
 import {
   changeObjectMode as changeObjectMode,
   deleteObjectMode,
-  visualMode,
+  selectMode,
   yankObjectMode,
 } from "./verb-object-modes";
 import { findCharMode, tillCharMode } from "./char-search-modes";
@@ -179,7 +179,7 @@ const modes: Mode[] = [
   changeObjectMode,
   yankObjectMode,
   deleteObjectMode,
-  visualMode,
+  selectMode,
   matchMode,
   replaceCharMode,
   lineSelectMode,

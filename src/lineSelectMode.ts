@@ -21,6 +21,10 @@ export const lineSelectMode: Mode = {
   handleSubCommandChain: makeSubChainHandler([
     { keys: "<up>", command: "cursorUpSelect" },
     { keys: "<down>", command: "cursorDownSelect" },
+
+    { keys: "v", leaveInMode: "select" },
+    { keys: "S", leaveInMode: "smart-select" },
+
     ...sharedSelectionKeys,
   ]),
 };

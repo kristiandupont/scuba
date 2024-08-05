@@ -1,30 +1,11 @@
 import * as vscode from "vscode";
-const parseTreeExtension = vscode.extensions.getExtension("pokey.parse-tree");
-
-async function getNodesAtCursors(editor: vscode.TextEditor) {
-  // Get the parse-tree API
-  if (!parseTreeExtension) {
-    const allExtensions = vscode.extensions.all;
-    const extensionIds = allExtensions.map((ext) => ext.id);
-    console.log("All extensions:", extensionIds);
-    throw new Error("Depends on pokey.parse-tree extension");
-  }
-  const { getTreeForUri } = await parseTreeExtension.activate();
-
-  const document = editor.document;
-  const selections = editor.selections || [];
-
-  const nodes = selections.map((selection) => {
-    const range = new vscode.Range(selection.start, selection.end);
-
-    return getTreeForUri(document.uri)?.rootNode.namedDescendantForPosition(
-      { row: range.start.line, column: range.start.character },
-      { row: range.end.line, column: range.end.character }
-    );
-  });
-
-  return nodes;
-}
+import {
+  getNodesAtCursors,
+  isFunctionDefinition,
+  isParameterNode,
+  isParametersNode,
+  isTagElement,
+} from "./utilities/tree-sitter-helpers";
 
 export async function selectSiblingNode(direction: "next" | "prev") {
   const editor = vscode.window.activeTextEditor;
@@ -36,15 +17,15 @@ export async function selectSiblingNode(direction: "next" | "prev") {
 
   const newSelections = nodes
     .map((node) => {
-      while (
-        (direction === "next" && !node.nextNamedSibling) ||
-        (direction === "prev" && !node.previousNamedSibling)
-      ) {
-        node = node.parent;
-        if (!node) {
-          return;
-        }
-      }
+      // while (
+      //   (direction === "next" && !node.nextNamedSibling) ||
+      //   (direction === "prev" && !node.previousNamedSibling)
+      // ) {
+      //   node = node.parent;
+      //   if (!node) {
+      //     return;
+      //   }
+      // }
 
       node =
         direction === "next"
@@ -128,32 +109,6 @@ async function selectFirstParameter() {
   editor.revealRange(editor.selection);
 }
 
-function isFunctionDefinition(node: any): boolean {
-  return [
-    "function_definition",
-    "function_declaration",
-    "method_definition",
-    "arrow_function",
-  ].includes(node.type);
-}
-
-function isParametersNode(node: any): boolean {
-  return ["parameters", "formal_parameters"].includes(node.type);
-}
-
-function isParameterNode(node: any): boolean {
-  return [
-    "parameter",
-    "typed_parameter",
-    "required_parameter",
-    "typed_required_parameter",
-    "default_parameter",
-    "typed_default_parameter",
-    "optional_parameter",
-    "typed_optional_parameter",
-  ].includes(node.type);
-}
-
 async function selectElement() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
@@ -182,19 +137,6 @@ async function selectElement() {
 
   editor.selections = newSelections;
   editor.revealRange(editor.selection);
-}
-
-function isTagElement(node: any): boolean {
-  // Check if the node is a JSX or HTML element
-  // This should be adapted to the specific Tree-sitter grammar being used
-  return [
-    // JSX types
-    "jsx_element",
-    "jsx_self_closing_element",
-    // HTML types
-    "element",
-    "self_closing_tag",
-  ].includes(node.type);
 }
 
 // Create two selections per cursor: one that selects the name part of the opening tag

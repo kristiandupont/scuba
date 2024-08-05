@@ -28,6 +28,10 @@ export const smartSelectMode: Mode = {
         }
       },
     },
+
+    { keys: "v", leaveInMode: "select" },
+    { keys: "V", leaveInMode: "line-select" },
+
     ...sharedSelectionKeys,
   ]),
 };

@@ -4,7 +4,7 @@ import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
 import {
   changeObjectMode,
   deleteObjectMode,
-  visualMode,
+  selectMode,
   yankObjectMode,
 } from "./verb-object-modes";
 import { matchMode } from "./matchMode";
@@ -13,12 +13,17 @@ import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
+import { surroundMode } from "./surroundMode";
 
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
   { keys: "<down>", command: "cursorDown" },
   { keys: "<left>", command: "cursorLeft" },
   { keys: "<right>", command: "cursorRight" },
+  { keys: "<home>", command: "cursorHome" },
+  { keys: "<end>", command: "cursorEnd" },
+  { keys: "<pageup>", command: "cursorPageUp" },
+  { keys: "<pagedown>", command: "cursorPageDown" },
 
   { keys: "^", command: "cursorLineStartSelect" },
   { keys: "$", command: "cursorLineEndSelect" },
@@ -149,7 +154,7 @@ const normalKeyMap: KeyMap = [
   },
   { keys: "za", command: "editor.toggleFold" },
 
-  { keys: "v", leaveInMode: visualMode.name },
+  { keys: "v", leaveInMode: selectMode.name },
   { keys: "c", leaveInMode: changeObjectMode.name },
   { keys: "y", leaveInMode: yankObjectMode.name },
   { keys: "d", leaveInMode: deleteObjectMode.name },
@@ -167,6 +172,8 @@ const normalKeyMap: KeyMap = [
   { keys: "S", leaveInMode: smartSelectMode.name },
 
   { keys: "  ", leaveInMode: sneakMode.name },
+
+  { keys: " s", leaveInMode: surroundMode.name },
 ];
 
 export const normalMode: Mode = {

@@ -94,6 +94,166 @@
         },
         "when": "editorTextFocus && scuba.currentMode != 'insert'",
         "key": "right"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<home>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "home"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<end>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "end"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<pageup>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "pageup"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<pagedown>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "pagedown"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-up>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+up"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-down>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+down"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-left>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+left"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-right>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+right"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-home>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+home"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-end>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+end"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-pageup>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+pageup"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-pagedown>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+pagedown"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-up>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+up"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-down>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+down"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-left>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+left"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-right>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+right"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-home>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+home"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-end>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+end"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-pageup>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+pageup"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<c-pagedown>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "ctrl+pagedown"
       }
     ]
   },

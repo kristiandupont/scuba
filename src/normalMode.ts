@@ -7,7 +7,6 @@ import {
   selectMode,
   yankObjectMode,
 } from "./verb-object-modes";
-import { matchMode } from "./matchMode";
 import { replaceCharMode } from "./replaceCharMode";
 import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
@@ -58,7 +57,7 @@ const normalKeyMap: KeyMap = [
       });
     },
   },
-  { keys: "D", command: "deleteAllRight", leaveInMode: defaultMode },
+  { keys: "D", command: "editor.action.deleteLines" },
   {
     keys: "p",
     command: "editor.action.clipboardPasteAction",
@@ -158,9 +157,6 @@ const normalKeyMap: KeyMap = [
   { keys: "c", leaveInMode: changeObjectMode.name },
   { keys: "y", leaveInMode: yankObjectMode.name },
   { keys: "d", leaveInMode: deleteObjectMode.name },
-
-  // Match mode (m)
-  { keys: "m", leaveInMode: matchMode.name },
 
   // Replace char mode (r)
   { keys: "r", leaveInMode: replaceCharMode.name },

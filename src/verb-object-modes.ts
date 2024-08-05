@@ -4,8 +4,8 @@ import {
   defaultMode,
   makeSubChainHandler,
   Mode,
+  resetCommandChain,
 } from "./extension";
-import { insertMode } from "./insertMode";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions";
 
@@ -71,18 +71,6 @@ const selectSubChainHandler = makeSubChainHandler([
   { keys: "<pageup>", command: "cursorPageUpSelect" },
   { keys: "<pagedown>", command: "cursorPageDownSelect" },
 
-  { keys: "w", command: "cursorWordRightSelect" },
-  { keys: "b", command: "cursorWordLeftSelect" },
-  { keys: "^", command: "cursorLineStartSelect" },
-  { keys: "$", command: "cursorLineEndSelect" },
-  { keys: "g0", command: "cursorHomeSelect" },
-  { keys: "gg", command: "cursorTopSelect" },
-  { keys: "G", command: "cursorBottomSelect" },
-  { keys: "H", command: "cursorTopSelect" },
-  { keys: "æ", command: "cursorWordPartRightSelect" },
-  { keys: "ø", command: "cursorWordPartLeftSelect" },
-  { keys: "%", command: "editor.action.selectToBracket" },
-
   { keys: "S", leaveInMode: "smart-select" },
   { keys: "V", leaveInMode: "line-select" },
 
@@ -106,7 +94,8 @@ export const selectMode: Mode = {
     const motion = motions.find((m) => m.keys === keys);
     if (motion) {
       await selectFromMotion(motion, textEditor);
-      changeMode({ mode: defaultMode });
+      resetCommandChain();
+      // changeMode({ mode: defaultMode });
     } else {
       const partialMatch = motions.some((m) => m.keys.startsWith(keys));
       if (!partialMatch) {
@@ -133,8 +122,11 @@ export const changeObjectMode: Mode = {
       const anySelection = textEditor.selections.some(
         (selection) => !selection.isEmpty
       );
+      if (anySelection) {
+        await vscode.commands.executeCommand("deleteRight");
+      }
 
-      changeMode({ mode: anySelection ? insertMode.name : defaultMode });
+      changeMode({ mode: anySelection ? "insert" : defaultMode });
     } else {
       const partialMatch = motions.some((motion) =>
         motion.keys.startsWith(keys)

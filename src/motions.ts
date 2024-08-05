@@ -6,11 +6,86 @@ import {
   isTagElement,
 } from "./utilities/tree-sitter-helpers";
 
-type Pair = [left: string, right: string];
 export type Motion = {
   keys: string;
-  matcher: (s: vscode.Selection, doc: vscode.TextDocument) => vscode.Range[];
+  matcher: (
+    s: vscode.Selection,
+    doc: vscode.TextDocument
+  ) => vscode.Selection[];
 };
+
+const makeRegexMotionMatcher =
+  (regex: RegExp, mode: "inside" | "around" | "forward" | "backward") =>
+  (s: vscode.Selection, doc: vscode.TextDocument) => {
+    const cursorPosition = s.active;
+    const line = doc.lineAt(cursorPosition.line).text;
+
+    const matches = [...line.matchAll(regex)];
+    const matchTouchingCursor = matches.find(
+      (match) =>
+        match.index! <= cursorPosition.character &&
+        match.index! + match[0].length >= cursorPosition.character
+    );
+
+    if (!matchTouchingCursor) {
+      return [];
+    }
+
+    let anchor = s.anchor;
+    let active = s.active;
+
+    if (mode === "forward") {
+      active = new vscode.Position(
+        cursorPosition.line,
+        matchTouchingCursor.index! + matchTouchingCursor[0].length
+      );
+    } else if (mode === "backward") {
+      active = new vscode.Position(
+        cursorPosition.line,
+        matchTouchingCursor.index!
+      );
+    } else if (mode === "inside") {
+      anchor = new vscode.Position(
+        cursorPosition.line,
+        matchTouchingCursor.index!
+      );
+      active = new vscode.Position(
+        cursorPosition.line,
+        matchTouchingCursor.index! + matchTouchingCursor[0].length
+      );
+    } else {
+      // Mode is 'around'
+      anchor = new vscode.Position(
+        cursorPosition.line,
+        matchTouchingCursor.index!
+      );
+      active = new vscode.Position(
+        cursorPosition.line,
+        matchTouchingCursor.index! + matchTouchingCursor[0].length
+      );
+    }
+
+    return [new vscode.Selection(anchor, active)];
+  };
+
+const wordMatchRegex = /\b\w+\b/g;
+
+const word: Motion = {
+  keys: "w",
+  matcher: makeRegexMotionMatcher(wordMatchRegex, "forward"),
+};
+
+const wordBackward: Motion = {
+  keys: "b",
+  matcher: makeRegexMotionMatcher(wordMatchRegex, "backward"),
+};
+
+const insideWord: Motion = {
+  keys: "iw",
+  matcher: makeRegexMotionMatcher(wordMatchRegex, "inside"),
+};
+
+type Pair = [left: string, right: string];
 
 function makePairedMotionMatcher(
   [left, right]: Pair,
@@ -102,7 +177,7 @@ function makePairedMotionMatcher(
     }
 
     if (start && end) {
-      return [new vscode.Range(start, end)];
+      return [new vscode.Selection(start, end)];
     }
 
     return [];
@@ -115,7 +190,7 @@ function makeNarrowestPairMotionMatcher(
 ) {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
     const cursorPosition = s.active;
-    let narrowestRange: vscode.Range | null = null;
+    let narrowestRange: vscode.Selection | null = null;
 
     for (const [left, right] of pairs) {
       let start: vscode.Position | null = null;
@@ -203,7 +278,7 @@ function makeNarrowestPairMotionMatcher(
       }
 
       if (start && end) {
-        const range = new vscode.Range(start, end);
+        const range = new vscode.Selection(start, end);
         if (
           !narrowestRange ||
           range.end.line - range.start.line <
@@ -221,14 +296,6 @@ function makeNarrowestPairMotionMatcher(
     return narrowestRange ? [narrowestRange] : [];
   };
 }
-
-const insideWord: Motion = {
-  keys: "iw",
-  matcher: (s: vscode.Selection, doc: vscode.TextDocument) => {
-    const wordRange = doc.getWordRangeAtPosition(s.active);
-    return wordRange ? [wordRange] : [];
-  },
-};
 
 const insideDoubleQuotes: Motion = {
   keys: 'i"',
@@ -293,7 +360,7 @@ const insideNarrowestBrackets: Motion = {
 function matchInsideElement(
   s: vscode.Selection,
   doc: vscode.TextDocument
-): vscode.Range[] {
+): vscode.Selection[] {
   let node = getNodeFromSelection(s, doc);
   while (node.parent && !isTagElement(node)) {
     node = node.parent;
@@ -311,7 +378,7 @@ function matchInsideElement(
 
   const start = node.startPosition;
   const end = node.endPosition;
-  return [new vscode.Range(start.row, start.column, end.row, end.column)];
+  return [new vscode.Selection(start.row, start.column, end.row, end.column)];
 }
 
 const insideElement: Motion = {
@@ -322,7 +389,7 @@ const insideElement: Motion = {
 function matchAroundElement(
   s: vscode.Selection,
   doc: vscode.TextDocument
-): vscode.Range[] {
+): vscode.Selection[] {
   let node = getNodeFromSelection(s, doc);
   while (node.parent && !isTagElement(node)) {
     node = node.parent;
@@ -334,7 +401,7 @@ function matchAroundElement(
 
   const start = node.startPosition;
   const end = node.endPosition;
-  return [new vscode.Range(start.row, start.column, end.row, end.column)];
+  return [new vscode.Selection(start.row, start.column, end.row, end.column)];
 }
 
 const aroundElement: Motion = {
@@ -345,7 +412,7 @@ const aroundElement: Motion = {
 function matchFunctionDefinition(
   s: vscode.Selection,
   doc: vscode.TextDocument
-): vscode.Range[] {
+): vscode.Selection[] {
   let node = getNodeFromSelection(s, doc);
   while (node.parent && !isFunctionDefinition(node)) {
     node = node.parent;
@@ -357,7 +424,7 @@ function matchFunctionDefinition(
 
   const start = node.startPosition;
   const end = node.endPosition;
-  return [new vscode.Range(start.row, start.column, end.row, end.column)];
+  return [new vscode.Selection(start.row, start.column, end.row, end.column)];
 }
 
 const aroundFunction: Motion = {
@@ -368,7 +435,7 @@ const aroundFunction: Motion = {
 function matchComment(
   s: vscode.Selection,
   doc: vscode.TextDocument
-): vscode.Range[] {
+): vscode.Selection[] {
   let node = getNodeFromSelection(s, doc);
   if (!isComment(node)) {
     return [];
@@ -376,7 +443,7 @@ function matchComment(
 
   const start = node.startPosition;
   const end = node.endPosition;
-  return [new vscode.Range(start.row, start.column, end.row, end.column)];
+  return [new vscode.Selection(start.row, start.column, end.row, end.column)];
 }
 
 const aroundComment: Motion = {
@@ -384,58 +451,80 @@ const aroundComment: Motion = {
   matcher: matchComment,
 };
 
-function matchIndentationScope(
-  s: vscode.Selection,
-  doc: vscode.TextDocument
-): vscode.Range[] {
-  const cursorLine = s.active.line;
-  const cursorIndentation =
-    doc.lineAt(cursorLine).firstNonWhitespaceCharacterIndex;
-  let startLine = cursorLine;
-  let endLine = cursorLine;
+const makeIndentationScopeMatcher =
+  (mode: "inside" | "around") =>
+  (s: vscode.Selection, doc: vscode.TextDocument): vscode.Selection[] => {
+    const cursorLine = s.active.line;
+    const cursorIndentation =
+      doc.lineAt(cursorLine).firstNonWhitespaceCharacterIndex;
+    let startLine = cursorLine;
+    let endLine = cursorLine;
 
-  for (let line = cursorLine; line >= 0; line--) {
-    const lineText = doc.lineAt(line).text;
-    if (lineText.trim() === "") {
-      continue;
+    for (let line = cursorLine; line >= 0; line--) {
+      const lineText = doc.lineAt(line).text;
+      if (lineText.trim() === "") {
+        continue;
+      }
+
+      if (
+        doc.lineAt(line).firstNonWhitespaceCharacterIndex >= cursorIndentation
+      ) {
+        startLine = line;
+      } else {
+        break;
+      }
     }
 
-    if (
-      doc.lineAt(line).firstNonWhitespaceCharacterIndex >= cursorIndentation
-    ) {
-      startLine = line;
+    for (let line = cursorLine + 1; line < doc.lineCount; line++) {
+      const lineText = doc.lineAt(line).text;
+      if (lineText.trim() === "") {
+        continue;
+      }
+
+      if (
+        doc.lineAt(line).firstNonWhitespaceCharacterIndex >= cursorIndentation
+      ) {
+        endLine = line;
+      } else {
+        break;
+      }
+    }
+
+    if (mode === "inside") {
+      return [
+        new vscode.Selection(
+          startLine,
+          cursorIndentation,
+          endLine,
+          doc.lineAt(endLine).text.length
+        ),
+      ];
     } else {
-      break;
+      // Mode is 'around'.
+      // If there is a line below, go to the start of that.
+
+      const isEOF = endLine === doc.lineCount - 1;
+      const endChar = isEOF ? doc.lineAt(endLine).text.length : 0;
+      endLine = isEOF ? endLine : endLine + 1;
+      return [new vscode.Selection(startLine, 0, endLine, endChar)];
     }
-  }
+  };
 
-  for (let line = cursorLine + 1; line < doc.lineCount; line++) {
-    const lineText = doc.lineAt(line).text;
-    if (lineText.trim() === "") {
-      continue;
-    }
+const insideIndentationScope: Motion = {
+  keys: "ii",
+  matcher: makeIndentationScopeMatcher("inside"),
+};
 
-    if (
-      doc.lineAt(line).firstNonWhitespaceCharacterIndex >= cursorIndentation
-    ) {
-      endLine = line;
-    } else {
-      break;
-    }
-  }
-
-  return [
-    new vscode.Range(startLine, 0, endLine, doc.lineAt(endLine).text.length),
-  ];
-}
-
-const aroundLinesWithSameIndentation: Motion = {
-  keys: "al",
-  matcher: matchIndentationScope,
+const aroundIndentationScope: Motion = {
+  keys: "ai",
+  matcher: makeIndentationScopeMatcher("around"),
 };
 
 export const motions: Motion[] = [
+  word,
+  wordBackward,
   insideWord,
+
   insideDoubleQuotes,
   insideSingleQuotes,
   insideBackticks,
@@ -446,10 +535,11 @@ export const motions: Motion[] = [
   insideAngleBrackets,
   insideNarrowestBrackets,
   insideElement,
+  insideIndentationScope,
 
   aroundElement,
   aroundFunction,
   aroundComment,
 
-  aroundLinesWithSameIndentation,
+  aroundIndentationScope,
 ];

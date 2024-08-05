@@ -34,6 +34,7 @@ export function isFunctionDefinition(node: any): boolean {
   return [
     "function_definition",
     "function_declaration",
+    "function_expression",
     "method_definition",
     "arrow_function",
   ].includes(node.type);

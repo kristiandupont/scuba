@@ -9,13 +9,21 @@ export const lineSelectMode: Mode = {
   color: new vscode.ThemeColor("editor.foreground"),
 
   onEnter: async function () {
-    // Move the cursor to the absolute column 0 of the current line
-    await vscode.commands.executeCommand("cursorMove", {
-      to: "wrappedLineStart",
-      by: "character",
-      value: 0,
+    // Make the selection starts and ends at char 0 and takes at least one line.
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+    const selections = editor.selections.map((selection) => {
+      const start = selection.start.with({ character: 0 });
+      let end = selection.end;
+      if (end.character !== 0) {
+        end = end.with({ line: end.line + 1, character: 0 });
+      }
+      return new vscode.Selection(start, end);
     });
-    await vscode.commands.executeCommand("cursorDownSelect");
+
+    editor.selections = selections;
   },
 
   handleSubCommandChain: makeSubChainHandler([

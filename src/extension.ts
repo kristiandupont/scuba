@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import { activateSmartSelectCommands } from "./smart-select-commands";
 import { insertMode } from "./insertMode";
 import { lineSelectMode } from "./lineSelectMode";
-import { matchMode } from "./matchMode";
 import { normalMode } from "./normalMode";
 import { replaceCharMode } from "./replaceCharMode";
 import { smartSelectMode } from "./smartSelectMode";
@@ -180,7 +179,6 @@ const modes: Mode[] = [
   yankObjectMode,
   deleteObjectMode,
   selectMode,
-  matchMode,
   replaceCharMode,
   lineSelectMode,
   smartSelectMode,

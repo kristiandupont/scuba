@@ -397,8 +397,11 @@ export const motions: Record<string, Motion> = {
   iW: makeRegexMotion(/\S+/g, "inside"),
 
   'i"': makePairedMotion(['"', '"'], "inside"),
+  'a"': makePairedMotion(['"', '"'], "around"),
   "i'": makePairedMotion(["'", "'"], "inside"),
+  "a'": makePairedMotion(["'", "'"], "around"),
   ib: makePairedMotion(["`", "`"], "inside"),
+  ab: makePairedMotion(["`", "`"], "around"),
   iq: makeNarrowestPairMotion(
     [
       ['"', '"'],
@@ -407,10 +410,22 @@ export const motions: Record<string, Motion> = {
     ],
     "inside"
   ),
+  aq: makeNarrowestPairMotion(
+    [
+      ['"', '"'],
+      ["'", "'"],
+      ["`", "`"],
+    ],
+    "around"
+  ),
   "i(": makePairedMotion(["(", ")"], "inside"),
+  "a(": makePairedMotion(["(", ")"], "around"),
   "i[": makePairedMotion(["[", "]"], "inside"),
+  "a[": makePairedMotion(["[", "]"], "around"),
   "i{": makePairedMotion(["{", "}"], "inside"),
+  "a{": makePairedMotion(["{", "}"], "around"),
   "i<": makePairedMotion(["<", ">"], "inside"),
+  "a<": makePairedMotion(["<", ">"], "around"),
   ip: makeNarrowestPairMotion(
     [
       ["(", ")"],
@@ -420,10 +435,20 @@ export const motions: Record<string, Motion> = {
     ],
     "inside"
   ),
+  ap: makeNarrowestPairMotion(
+    [
+      ["(", ")"],
+      ["[", "]"],
+      ["{", "}"],
+      ["<", ">"],
+    ],
+    "around"
+  ),
   ie: makeElementMotion("inside"),
   ae: makeElementMotion("around"),
-  af: functionMotion,
-  ac: commentMotion,
   ii: makeIndentationScopeMotion("inside"),
   ai: makeIndentationScopeMotion("around"),
+
+  af: functionMotion,
+  ac: commentMotion,
 };

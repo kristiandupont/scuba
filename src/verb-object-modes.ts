@@ -8,6 +8,7 @@ import {
 } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
+import { makeSearchMotion } from "./motions/makeSearchMotion";
 
 function applyMotion(
   motion: Motion,
@@ -61,21 +62,55 @@ async function deleteFromMotion(
   });
 }
 
-const selectSubChainHandler = makeSubChainHandler([
-  { keys: "<up>", command: "cursorUpSelect" },
-  { keys: "<down>", command: "cursorDownSelect" },
-  { keys: "<left>", command: "cursorLeftSelect" },
-  { keys: "<right>", command: "cursorRightSelect" },
-  { keys: "<home>", command: "cursorHomeSelect" },
-  { keys: "<end>", command: "cursorEndSelect" },
-  { keys: "<pageup>", command: "cursorPageUpSelect" },
-  { keys: "<pagedown>", command: "cursorPageDownSelect" },
+function findMotion(keys: string): Motion | "partial" | undefined {
+  // Search motions aren't registered because they rely on an
+  // unknown second character.
+  if (["f", "F", "t", "T"].includes(keys[0])) {
+    if (keys.length === 1) {
+      return "partial";
+    }
 
-  { keys: "S", leaveInMode: "smart-select" },
-  { keys: "V", leaveInMode: "line-select" },
+    const mode = ["f", "F"].includes(keys[0]) ? "inclusive" : "exclusive";
+    const direction = ["f", "t"].includes(keys[0]) ? "forward" : "backward";
+    const character = keys[1];
 
-  ...sharedSelectionKeys,
-]);
+    return makeSearchMotion(character, mode, direction);
+  }
+
+  // Otherwise, check the registry
+  const motion = motions[keys];
+  if (motion) {
+    return motion;
+  }
+
+  const partialMatch = Object.keys(motions).some((motion) =>
+    motion.startsWith(keys)
+  );
+  if (partialMatch) {
+    return "partial";
+  }
+
+  return undefined;
+}
+
+const selectSubChainHandler = makeSubChainHandler(
+  [
+    { keys: "<up>", command: "cursorUpSelect" },
+    { keys: "<down>", command: "cursorDownSelect" },
+    { keys: "<left>", command: "cursorLeftSelect" },
+    { keys: "<right>", command: "cursorRightSelect" },
+    { keys: "<home>", command: "cursorHomeSelect" },
+    { keys: "<end>", command: "cursorEndSelect" },
+    { keys: "<pageup>", command: "cursorPageUpSelect" },
+    { keys: "<pagedown>", command: "cursorPageDownSelect" },
+
+    { keys: "S", leaveInMode: "smart-select" },
+    { keys: "V", leaveInMode: "line-select" },
+
+    ...sharedSelectionKeys,
+  ],
+  "select"
+);
 
 export const selectMode: Mode = {
   isInsertMode: false,
@@ -91,18 +126,17 @@ export const selectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions[keys];
+    const motion = findMotion(keys);
+
     if (motion) {
+      if (motion === "partial") {
+        return;
+      }
+
       await selectFromMotion(motion, textEditor);
       resetCommandChain();
     } else {
-      const partialMatch = Object.keys(motions).some((motion) =>
-        motion.startsWith(keys)
-      );
-      if (!partialMatch) {
-        // Not a motion. Try with the fallback select sub-chain handler.
-        return selectSubChainHandler(keys, textEditor);
-      }
+      selectSubChainHandler(keys, textEditor);
     }
   },
 };
@@ -117,8 +151,13 @@ export const changeObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions[keys];
+    const motion = findMotion(keys);
+
     if (motion) {
+      if (motion === "partial") {
+        return;
+      }
+
       await selectFromMotion(motion, textEditor);
       const anySelection = textEditor.selections.some(
         (selection) => !selection.isEmpty
@@ -129,16 +168,8 @@ export const changeObjectMode: Mode = {
 
       changeMode({ mode: anySelection ? "insert" : defaultMode });
     } else {
-      const partialMatch = Object.keys(motions).some((motion) =>
-        motion.startsWith(keys)
-      );
-
-      if (!partialMatch) {
-        vscode.window.showWarningMessage(
-          `Unknown motion key sequence: ${keys}.`
-        );
-        changeMode({ mode: defaultMode });
-      }
+      vscode.window.showWarningMessage(`Unknown motion key sequence: ${keys}.`);
+      changeMode({ mode: defaultMode });
     }
   },
 };
@@ -153,21 +184,19 @@ export const deleteObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions[keys];
+    const motion = findMotion(keys);
+
     if (motion) {
+      if (motion === "partial") {
+        return;
+      }
+
       await yank(motion, textEditor);
       await deleteFromMotion(motion, textEditor);
       changeMode({ mode: defaultMode });
     } else {
-      const partialMatch = Object.keys(motions).some((motion) =>
-        motion.startsWith(keys)
-      );
-      if (!partialMatch) {
-        vscode.window.showWarningMessage(
-          `Unknown motion key sequence: ${keys}.`
-        );
-        changeMode({ mode: defaultMode });
-      }
+      vscode.window.showWarningMessage(`Unknown motion key sequence: ${keys}.`);
+      changeMode({ mode: defaultMode });
     }
   },
 };
@@ -182,20 +211,18 @@ export const yankObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions[keys];
+    const motion = findMotion(keys);
+
     if (motion) {
+      if (motion === "partial") {
+        return;
+      }
+
       await yank(motion, textEditor);
       changeMode({ mode: defaultMode });
     } else {
-      const partialMatch = Object.keys(motions).some((motion) =>
-        motion.startsWith(keys)
-      );
-      if (!partialMatch) {
-        vscode.window.showWarningMessage(
-          `Unknown motion key sequence: ${keys}.`
-        );
-        changeMode({ mode: defaultMode });
-      }
+      vscode.window.showWarningMessage(`Unknown motion key sequence: ${keys}.`);
+      changeMode({ mode: defaultMode });
     }
   },
 };

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { KeyMap } from "./extension";
+import { defaultMode, KeyMap } from "./extension";
 
 export const sharedSelectionKeys: KeyMap = [
   {
@@ -16,6 +16,11 @@ export const sharedSelectionKeys: KeyMap = [
     keys: "c",
     command: "deleteRight",
     leaveInMode: "insert",
+  },
+  {
+    keys: "p",
+    command: "editor.action.clipboardPasteAction",
+    leaveInMode: defaultMode,
   },
   {
     keys: "s",

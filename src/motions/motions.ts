@@ -4,7 +4,7 @@ import {
   isComment,
   isFunctionDefinition,
   isTagElement,
-} from "./utilities/tree-sitter-helpers";
+} from "../utilities/tree-sitter-helpers";
 
 export type Motion = (
   s: vscode.Selection,
@@ -64,8 +64,6 @@ const makeRegexMotion =
 
     return [new vscode.Selection(anchor, active)];
   };
-
-const wordMatchRegex = /\b\w+\b/g;
 
 type Pair = [left: string, right: string];
 
@@ -390,9 +388,13 @@ const makeIndentationScopeMotion =
   };
 
 export const motions: Record<string, Motion> = {
-  w: makeRegexMotion(wordMatchRegex, "forward"),
-  b: makeRegexMotion(wordMatchRegex, "backward"),
-  iw: makeRegexMotion(wordMatchRegex, "inside"),
+  w: makeRegexMotion(/\b\w+\b/g, "forward"),
+  b: makeRegexMotion(/\b\w+\b/g, "backward"),
+  iw: makeRegexMotion(/\b\w+\b/g, "inside"),
+
+  W: makeRegexMotion(/\S+/g, "forward"),
+  B: makeRegexMotion(/\S+/g, "backward"),
+  iW: makeRegexMotion(/\S+/g, "inside"),
 
   'i"': makePairedMotion(['"', '"'], "inside"),
   "i'": makePairedMotion(["'", "'"], "inside"),

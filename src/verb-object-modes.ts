@@ -7,7 +7,7 @@ import {
   resetCommandChain,
 } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
-import { Motion, motions } from "./motions";
+import { Motion, motions } from "./motions/motions";
 
 function applyMotion(
   motion: Motion,

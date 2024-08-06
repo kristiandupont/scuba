@@ -65,6 +65,20 @@ const makeRegexMotion =
     return [new vscode.Selection(anchor, active)];
   };
 
+const makeExtremityMotion =
+  (position: "start" | "end") =>
+  (s: vscode.Selection, doc: vscode.TextDocument) => {
+    const cursorPosition = s.active;
+    const newActive =
+      position === "start" ? 0 : doc.lineAt(cursorPosition.line).text.length;
+    return [
+      new vscode.Selection(
+        s.anchor,
+        new vscode.Position(cursorPosition.line, newActive)
+      ),
+    ];
+  };
+
 type Pair = [left: string, right: string];
 
 function makePairedMotion([left, right]: Pair, mode: "inside" | "around") {
@@ -395,6 +409,9 @@ export const motions: Record<string, Motion> = {
   W: makeRegexMotion(/\S+/g, "forward"),
   B: makeRegexMotion(/\S+/g, "backward"),
   iW: makeRegexMotion(/\S+/g, "inside"),
+
+  $: makeExtremityMotion("end"),
+  "§": makeExtremityMotion("start"),
 
   'i"': makePairedMotion(['"', '"'], "inside"),
   'a"': makePairedMotion(['"', '"'], "around"),

@@ -17,7 +17,7 @@ function applyMotion(
   const ranges: vscode.Range[] = [];
 
   for (const selection of editor.selections) {
-    const results = motion.matcher(selection, document);
+    const results = motion(selection, document);
     ranges.push(...results);
   }
 
@@ -91,15 +91,16 @@ export const selectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions.find((m) => m.keys === keys);
+    const motion = motions[keys];
     if (motion) {
       await selectFromMotion(motion, textEditor);
       resetCommandChain();
-      // changeMode({ mode: defaultMode });
     } else {
-      const partialMatch = motions.some((m) => m.keys.startsWith(keys));
+      const partialMatch = Object.keys(motions).some((motion) =>
+        motion.startsWith(keys)
+      );
       if (!partialMatch) {
-        // Not a motion. Try with the fallback visual sub-chain handler.
+        // Not a motion. Try with the fallback select sub-chain handler.
         return selectSubChainHandler(keys, textEditor);
       }
     }
@@ -116,7 +117,7 @@ export const changeObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions.find((m) => m.keys === keys);
+    const motion = motions[keys];
     if (motion) {
       await selectFromMotion(motion, textEditor);
       const anySelection = textEditor.selections.some(
@@ -128,8 +129,8 @@ export const changeObjectMode: Mode = {
 
       changeMode({ mode: anySelection ? "insert" : defaultMode });
     } else {
-      const partialMatch = motions.some((motion) =>
-        motion.keys.startsWith(keys)
+      const partialMatch = Object.keys(motions).some((motion) =>
+        motion.startsWith(keys)
       );
 
       if (!partialMatch) {
@@ -152,14 +153,14 @@ export const deleteObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions.find((m) => m.keys === keys);
+    const motion = motions[keys];
     if (motion) {
       await yank(motion, textEditor);
       await deleteFromMotion(motion, textEditor);
       changeMode({ mode: defaultMode });
     } else {
-      const partialMatch = motions.some((motion) =>
-        motion.keys.startsWith(keys)
+      const partialMatch = Object.keys(motions).some((motion) =>
+        motion.startsWith(keys)
       );
       if (!partialMatch) {
         vscode.window.showWarningMessage(
@@ -181,13 +182,13 @@ export const yankObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const motion = motions.find((m) => m.keys === keys);
+    const motion = motions[keys];
     if (motion) {
       await yank(motion, textEditor);
       changeMode({ mode: defaultMode });
     } else {
-      const partialMatch = motions.some((motion) =>
-        motion.keys.startsWith(keys)
+      const partialMatch = Object.keys(motions).some((motion) =>
+        motion.startsWith(keys)
       );
       if (!partialMatch) {
         vscode.window.showWarningMessage(

@@ -6,15 +6,12 @@ import {
   isTagElement,
 } from "./utilities/tree-sitter-helpers";
 
-export type Motion = {
-  keys: string;
-  matcher: (
-    s: vscode.Selection,
-    doc: vscode.TextDocument
-  ) => vscode.Selection[];
-};
+export type Motion = (
+  s: vscode.Selection,
+  doc: vscode.TextDocument
+) => vscode.Selection[];
 
-const makeRegexMotionMatcher =
+const makeRegexMotion =
   (regex: RegExp, mode: "inside" | "around" | "forward" | "backward") =>
   (s: vscode.Selection, doc: vscode.TextDocument) => {
     const cursorPosition = s.active;
@@ -70,27 +67,9 @@ const makeRegexMotionMatcher =
 
 const wordMatchRegex = /\b\w+\b/g;
 
-const word: Motion = {
-  keys: "w",
-  matcher: makeRegexMotionMatcher(wordMatchRegex, "forward"),
-};
-
-const wordBackward: Motion = {
-  keys: "b",
-  matcher: makeRegexMotionMatcher(wordMatchRegex, "backward"),
-};
-
-const insideWord: Motion = {
-  keys: "iw",
-  matcher: makeRegexMotionMatcher(wordMatchRegex, "inside"),
-};
-
 type Pair = [left: string, right: string];
 
-function makePairedMotionMatcher(
-  [left, right]: Pair,
-  mode: "inside" | "around"
-) {
+function makePairedMotion([left, right]: Pair, mode: "inside" | "around") {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
     const cursorPosition = s.active;
     let start: vscode.Position | null = null;
@@ -184,10 +163,7 @@ function makePairedMotionMatcher(
   };
 }
 
-function makeNarrowestPairMotionMatcher(
-  pairs: Pair[],
-  mode: "inside" | "around"
-) {
+function makeNarrowestPairMotion(pairs: Pair[], mode: "inside" | "around") {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
     const cursorPosition = s.active;
     let narrowestRange: vscode.Selection | null = null;
@@ -297,119 +273,32 @@ function makeNarrowestPairMotionMatcher(
   };
 }
 
-const insideDoubleQuotes: Motion = {
-  keys: 'i"',
-  matcher: makePairedMotionMatcher(['"', '"'], "inside"),
-};
+const makeElementMotion =
+  (mode: "inside" | "around") =>
+  (s: vscode.Selection, doc: vscode.TextDocument): vscode.Selection[] => {
+    let node = getNodeFromSelection(s, doc);
+    while (node.parent && !isTagElement(node)) {
+      node = node.parent;
+    }
 
-const insideSingleQuotes: Motion = {
-  keys: "i'",
-  matcher: makePairedMotionMatcher(["'", "'"], "inside"),
-};
+    if (!isTagElement(node)) {
+      return [];
+    }
 
-const insideBackticks: Motion = {
-  keys: "ib",
-  matcher: makePairedMotionMatcher(["`", "`"], "inside"),
-};
+    if (mode === "inside") {
+      node = node.children[1]; // Contents node
+    }
 
-const insideNarrowestQuotes: Motion = {
-  keys: "iq",
-  matcher: makeNarrowestPairMotionMatcher(
-    [
-      ['"', '"'],
-      ["'", "'"],
-      ["`", "`"],
-    ],
-    "inside"
-  ),
-};
+    if (!node) {
+      return [];
+    }
 
-const insideParentheses: Motion = {
-  keys: "i(",
-  matcher: makePairedMotionMatcher(["(", ")"], "inside"),
-};
+    const start = node.startPosition;
+    const end = node.endPosition;
+    return [new vscode.Selection(start.row, start.column, end.row, end.column)];
+  };
 
-const insideBrackets: Motion = {
-  keys: "i[",
-  matcher: makePairedMotionMatcher(["[", "]"], "inside"),
-};
-
-const insideBraces: Motion = {
-  keys: "i{",
-  matcher: makePairedMotionMatcher(["{", "}"], "inside"),
-};
-
-const insideAngleBrackets: Motion = {
-  keys: "i<",
-  matcher: makePairedMotionMatcher(["<", ">"], "inside"),
-};
-
-const insideNarrowestBrackets: Motion = {
-  keys: "ip",
-  matcher: makeNarrowestPairMotionMatcher(
-    [
-      ["(", ")"],
-      ["[", "]"],
-      ["{", "}"],
-      ["<", ">"],
-    ],
-    "inside"
-  ),
-};
-
-function matchInsideElement(
-  s: vscode.Selection,
-  doc: vscode.TextDocument
-): vscode.Selection[] {
-  let node = getNodeFromSelection(s, doc);
-  while (node.parent && !isTagElement(node)) {
-    node = node.parent;
-  }
-
-  if (!isTagElement(node)) {
-    return [];
-  }
-
-  node = node.children[1]; // Contents node
-
-  if (!node) {
-    return [];
-  }
-
-  const start = node.startPosition;
-  const end = node.endPosition;
-  return [new vscode.Selection(start.row, start.column, end.row, end.column)];
-}
-
-const insideElement: Motion = {
-  keys: "ie",
-  matcher: matchInsideElement,
-};
-
-function matchAroundElement(
-  s: vscode.Selection,
-  doc: vscode.TextDocument
-): vscode.Selection[] {
-  let node = getNodeFromSelection(s, doc);
-  while (node.parent && !isTagElement(node)) {
-    node = node.parent;
-  }
-
-  if (!isTagElement(node)) {
-    return [];
-  }
-
-  const start = node.startPosition;
-  const end = node.endPosition;
-  return [new vscode.Selection(start.row, start.column, end.row, end.column)];
-}
-
-const aroundElement: Motion = {
-  keys: "ae",
-  matcher: matchAroundElement,
-};
-
-function matchFunctionDefinition(
+function functionMotion(
   s: vscode.Selection,
   doc: vscode.TextDocument
 ): vscode.Selection[] {
@@ -427,12 +316,7 @@ function matchFunctionDefinition(
   return [new vscode.Selection(start.row, start.column, end.row, end.column)];
 }
 
-const aroundFunction: Motion = {
-  keys: "af",
-  matcher: matchFunctionDefinition,
-};
-
-function matchComment(
+function commentMotion(
   s: vscode.Selection,
   doc: vscode.TextDocument
 ): vscode.Selection[] {
@@ -446,12 +330,7 @@ function matchComment(
   return [new vscode.Selection(start.row, start.column, end.row, end.column)];
 }
 
-const aroundComment: Motion = {
-  keys: "ac",
-  matcher: matchComment,
-};
-
-const makeIndentationScopeMatcher =
+const makeIndentationScopeMotion =
   (mode: "inside" | "around") =>
   (s: vscode.Selection, doc: vscode.TextDocument): vscode.Selection[] => {
     const cursorLine = s.active.line;
@@ -510,36 +389,39 @@ const makeIndentationScopeMatcher =
     }
   };
 
-const insideIndentationScope: Motion = {
-  keys: "ii",
-  matcher: makeIndentationScopeMatcher("inside"),
+export const motions: Record<string, Motion> = {
+  w: makeRegexMotion(wordMatchRegex, "forward"),
+  b: makeRegexMotion(wordMatchRegex, "backward"),
+  iw: makeRegexMotion(wordMatchRegex, "inside"),
+
+  'i"': makePairedMotion(['"', '"'], "inside"),
+  "i'": makePairedMotion(["'", "'"], "inside"),
+  ib: makePairedMotion(["`", "`"], "inside"),
+  iq: makeNarrowestPairMotion(
+    [
+      ['"', '"'],
+      ["'", "'"],
+      ["`", "`"],
+    ],
+    "inside"
+  ),
+  "i(": makePairedMotion(["(", ")"], "inside"),
+  "i[": makePairedMotion(["[", "]"], "inside"),
+  "i{": makePairedMotion(["{", "}"], "inside"),
+  "i<": makePairedMotion(["<", ">"], "inside"),
+  ip: makeNarrowestPairMotion(
+    [
+      ["(", ")"],
+      ["[", "]"],
+      ["{", "}"],
+      ["<", ">"],
+    ],
+    "inside"
+  ),
+  ie: makeElementMotion("inside"),
+  ae: makeElementMotion("around"),
+  af: functionMotion,
+  ac: commentMotion,
+  ii: makeIndentationScopeMotion("inside"),
+  ai: makeIndentationScopeMotion("around"),
 };
-
-const aroundIndentationScope: Motion = {
-  keys: "ai",
-  matcher: makeIndentationScopeMatcher("around"),
-};
-
-export const motions: Motion[] = [
-  word,
-  wordBackward,
-  insideWord,
-
-  insideDoubleQuotes,
-  insideSingleQuotes,
-  insideBackticks,
-  insideNarrowestQuotes,
-  insideParentheses,
-  insideBrackets,
-  insideBraces,
-  insideAngleBrackets,
-  insideNarrowestBrackets,
-  insideElement,
-  insideIndentationScope,
-
-  aroundElement,
-  aroundFunction,
-  aroundComment,
-
-  aroundIndentationScope,
-];

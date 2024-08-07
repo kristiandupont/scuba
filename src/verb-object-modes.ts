@@ -109,7 +109,8 @@ const selectSubChainHandler = makeSubChainHandler(
 
     ...sharedSelectionKeys,
   ],
-  "select"
+  undefined, // leaveInMode -- don't change after a subcommand
+  undefined // leaveInModeOnNoMatch -- don't even change if no match
 );
 
 export const selectMode: Mode = {

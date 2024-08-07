@@ -36,4 +36,12 @@ export const sharedSelectionKeys: KeyMap = [
       });
     },
   },
+  {
+    keys: "u",
+    command: "editor.action.transformToLowercase",
+  },
+  {
+    keys: "U",
+    command: "editor.action.transformToUppercase",
+  },
 ];

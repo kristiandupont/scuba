@@ -120,7 +120,8 @@ export type KeyMap = KeyDefinition[];
 
 export function makeSubChainHandler(
   keyMap: KeyMap,
-  defaultLeaveInMode?: string
+  defaultLeaveInMode?: string,
+  leaveInModeOnNoMatch: string | undefined = defaultMode
 ) {
   return async (keys: string, textEditor: vscode.TextEditor) => {
     let count = 1;
@@ -156,8 +157,9 @@ export function makeSubChainHandler(
       }
       if (leaveInMode) {
         changeMode({ mode: leaveInMode });
+      } else {
+        resetCommandChain();
       }
-      resetCommandChain();
     } else {
       // If no key definition starts with the current chain, give a warning
       // and reset the chain.
@@ -166,7 +168,11 @@ export function makeSubChainHandler(
 
       if (!partialMatch) {
         vscode.window.showWarningMessage(`Unknown key sequence: ${keys}.`);
-        changeMode({ mode: defaultMode });
+        if (leaveInModeOnNoMatch) {
+          changeMode({ mode: leaveInModeOnNoMatch });
+        } else {
+          resetCommandChain();
+        }
       }
     }
   };

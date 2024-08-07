@@ -24,8 +24,13 @@ const normalKeyMap: KeyMap = [
   { keys: "<pageup>", command: "cursorPageUp" },
   { keys: "<pagedown>", command: "cursorPageDown" },
 
-  { keys: "^", command: "cursorLineStartSelect" },
-  { keys: "$", command: "cursorLineEndSelect" },
+  { keys: "<a-up>", command: "editor.action.moveLinesUpAction" },
+  { keys: "<a-down>", command: "editor.action.moveLinesDownAction" },
+  { keys: "<a-left>", command: "cursorWordStartLeft" },
+  { keys: "<a-right>", command: "cursorWordStartRight" },
+
+  { keys: "§", command: "cursorLineStart" },
+  { keys: "$", command: "cursorLineEnd" },
 
   { keys: "i", leaveInMode: "insert" },
   { keys: "I", command: "cursorHome", leaveInMode: insertMode.name },

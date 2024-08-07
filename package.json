@@ -254,6 +254,78 @@
         },
         "when": "editorTextFocus && scuba.currentMode != 'insert'",
         "key": "ctrl+pagedown"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-up>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+up"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-down>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+down"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-left>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+left"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-right>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+right"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-home>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+home"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-end>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+end"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-pageup>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+pageup"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<a-pagedown>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "alt+pagedown"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<backspace>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "backspace"
       }
     ]
   },

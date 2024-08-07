@@ -21,7 +21,7 @@ export const smartSelectMode: Mode = {
     { keys: "e", command: "scuba.selectElement" },
     { keys: "t", command: "scuba.selectTagName", leaveInMode: "insert" },
     {
-      keys: "u",
+      keys: "<backspace>",
       command: async function () {
         if (vscode.window.activeTextEditor && previousSelections) {
           vscode.window.activeTextEditor.selections = previousSelections;

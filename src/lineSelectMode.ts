@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
+import { storeSelections } from "./utilities/selection";
 
 export const lineSelectMode: Mode = {
   isInsertMode: false,
@@ -14,6 +15,9 @@ export const lineSelectMode: Mode = {
     if (!editor) {
       return;
     }
+
+    storeSelections(editor);
+
     const selections = editor.selections.map((selection) => {
       const start = selection.start.with({ character: 0 });
       let end = selection.end;

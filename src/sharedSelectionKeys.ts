@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { defaultMode, KeyMap } from "./extension";
+import { restoreSelections } from "./utilities/selection";
 
 export const sharedSelectionKeys: KeyMap = [
   {
@@ -43,5 +44,15 @@ export const sharedSelectionKeys: KeyMap = [
   {
     keys: "U",
     command: "editor.action.transformToUppercase",
+  },
+  {
+    keys: "<backspace>",
+    command: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      restoreSelections(editor);
+    },
   },
 ];

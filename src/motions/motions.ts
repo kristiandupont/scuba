@@ -1,9 +1,11 @@
 import * as vscode from "vscode";
 import {
   getNodeFromSelection,
-  isComment,
-  isFunctionDefinition,
-  isTagElement,
+  isCommentNode,
+  isFunctionDefinitionNode,
+  isParameterOrArgumentNode,
+  isPropertyLikeNode,
+  isElementNode,
 } from "../utilities/tree-sitter-helpers";
 
 export type Motion = (
@@ -289,11 +291,11 @@ const makeElementMotion =
   (mode: "inside" | "around") =>
   (s: vscode.Selection, doc: vscode.TextDocument): vscode.Selection[] => {
     let node = getNodeFromSelection(s, doc);
-    while (node.parent && !isTagElement(node)) {
+    while (node.parent && !isElementNode(node)) {
       node = node.parent;
     }
 
-    if (!isTagElement(node)) {
+    if (!isElementNode(node)) {
       return [];
     }
 
@@ -310,16 +312,52 @@ const makeElementMotion =
     return [new vscode.Selection(start.row, start.column, end.row, end.column)];
   };
 
+function makePropertyOrParameterMotion(mode: "inside" | "around") {
+  return (s: vscode.Selection, doc: vscode.TextDocument) => {
+    let node = getNodeFromSelection(s, doc);
+    while (
+      node.parent &&
+      !isPropertyLikeNode(node) &&
+      !isParameterOrArgumentNode(node)
+    ) {
+      node = node.parent;
+    }
+
+    if (!isPropertyLikeNode(node) && !isParameterOrArgumentNode(node)) {
+      return [];
+    }
+
+    let start = node.startPosition;
+    let end = node.endPosition;
+
+    // If mode is "around", include the following comma (unless it's the last one -- in that case,
+    // include the previous comma, if there is one)
+    if (mode === "around") {
+      const nextSibling = node.nextSibling;
+      if (nextSibling && nextSibling.text === ",") {
+        end = nextSibling.endPosition;
+      } else {
+        const previousSibling = node.previousSibling;
+        if (previousSibling && previousSibling.text === ",") {
+          start = previousSibling.startPosition;
+        }
+      }
+    }
+
+    return [new vscode.Selection(start.row, start.column, end.row, end.column)];
+  };
+}
+
 function functionMotion(
   s: vscode.Selection,
   doc: vscode.TextDocument
 ): vscode.Selection[] {
   let node = getNodeFromSelection(s, doc);
-  while (node.parent && !isFunctionDefinition(node)) {
+  while (node.parent && !isFunctionDefinitionNode(node)) {
     node = node.parent;
   }
 
-  if (!isFunctionDefinition(node)) {
+  if (!isFunctionDefinitionNode(node)) {
     return [];
   }
 
@@ -333,7 +371,7 @@ function commentMotion(
   doc: vscode.TextDocument
 ): vscode.Selection[] {
   let node = getNodeFromSelection(s, doc);
-  if (!isComment(node)) {
+  if (!isCommentNode(node)) {
     return [];
   }
 
@@ -417,8 +455,8 @@ export const motions: Record<string, Motion> = {
   'a"': makePairedMotion(['"', '"'], "around"),
   "i'": makePairedMotion(["'", "'"], "inside"),
   "a'": makePairedMotion(["'", "'"], "around"),
-  ib: makePairedMotion(["`", "`"], "inside"),
-  ab: makePairedMotion(["`", "`"], "around"),
+  it: makePairedMotion(["`", "`"], "inside"),
+  at: makePairedMotion(["`", "`"], "around"),
   iq: makeNarrowestPairMotion(
     [
       ['"', '"'],
@@ -443,7 +481,7 @@ export const motions: Record<string, Motion> = {
   "a{": makePairedMotion(["{", "}"], "around"),
   "i<": makePairedMotion(["<", ">"], "inside"),
   "a<": makePairedMotion(["<", ">"], "around"),
-  ip: makeNarrowestPairMotion(
+  ib: makeNarrowestPairMotion(
     [
       ["(", ")"],
       ["[", "]"],
@@ -452,7 +490,7 @@ export const motions: Record<string, Motion> = {
     ],
     "inside"
   ),
-  ap: makeNarrowestPairMotion(
+  ab: makeNarrowestPairMotion(
     [
       ["(", ")"],
       ["[", "]"],
@@ -465,6 +503,9 @@ export const motions: Record<string, Motion> = {
   ae: makeElementMotion("around"),
   ii: makeIndentationScopeMotion("inside"),
   ai: makeIndentationScopeMotion("around"),
+
+  ip: makePropertyOrParameterMotion("inside"),
+  ap: makePropertyOrParameterMotion("around"),
 
   af: functionMotion,
   ac: commentMotion,

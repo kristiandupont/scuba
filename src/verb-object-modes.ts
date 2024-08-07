@@ -9,6 +9,7 @@ import {
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
 import { makeSearchMotion } from "./motions/makeSearchMotion";
+import { isAnyTextSelected, storeSelections } from "./utilities/selection";
 
 function applyMotion(
   motion: Motion,
@@ -120,7 +121,16 @@ export const selectMode: Mode = {
   color: new vscode.ThemeColor("editor.foreground"),
 
   onEnter: async function () {
-    vscode.commands.executeCommand("cursorRightSelect");
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    storeSelections(editor);
+
+    if (!isAnyTextSelected(editor)) {
+      vscode.commands.executeCommand("cursorRightSelect");
+    }
   },
 
   handleSubCommandChain: async function (

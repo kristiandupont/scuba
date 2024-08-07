@@ -13,6 +13,7 @@ import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
 import { surroundMode } from "./surroundMode";
+import { restoreSelections } from "./utilities/selection";
 
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
@@ -157,6 +158,17 @@ const normalKeyMap: KeyMap = [
     },
   },
   { keys: "za", command: "editor.toggleFold" },
+
+  {
+    keys: "<backspace>",
+    command: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      restoreSelections(editor);
+    },
+  },
 
   { keys: "v", leaveInMode: selectMode.name },
   { keys: "c", leaveInMode: changeObjectMode.name },

@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import {
   getNodesAtCursors,
-  isFunctionDefinition,
-  isParameterNode,
+  isFunctionDefinitionNode,
+  isParameterOrArgumentNode,
   isParametersNode,
-  isTagElement,
+  isElementNode,
 } from "./utilities/tree-sitter-helpers";
 
 export async function selectSiblingNode(direction: "next" | "prev") {
@@ -59,7 +59,7 @@ async function selectFirstParameter() {
   const newSelections = nodes
     .map((node) => {
       // Trace upwards to find the function definition
-      while (node.parent && !isFunctionDefinition(node)) {
+      while (node.parent && !isFunctionDefinitionNode(node)) {
         node = node.parent;
       }
 
@@ -82,7 +82,7 @@ async function selectFirstParameter() {
       }
 
       const firstParameterNode = parametersNode.children.find((child: any) =>
-        isParameterNode(child)
+        isParameterOrArgumentNode(child)
       );
 
       if (!firstParameterNode) {
@@ -119,12 +119,12 @@ async function selectElement() {
   const newSelections = nodes
     .map((node) => {
       // Trace upwards to find the nearest JSX tag
-      while (node.parent && !isTagElement(node)) {
+      while (node.parent && !isElementNode(node)) {
         node = node.parent;
       }
 
       // If we didn't find a JSX element, return null
-      if (!isTagElement(node)) {
+      if (!isElementNode(node)) {
         return null;
       }
 
@@ -150,12 +150,12 @@ async function selectTagName() {
   let nodes = await getNodesAtCursors(editor);
   const newSelections = nodes
     .flatMap((node) => {
-      // Trace upwards to find the nearest JSX tag
-      while (node.parent && !isTagElement(node)) {
+      // Trace upwards to find the nearest JSX element
+      while (node.parent && !isElementNode(node)) {
         node = node.parent;
       }
 
-      if (!isTagElement(node)) {
+      if (!isElementNode(node)) {
         return [];
       }
 

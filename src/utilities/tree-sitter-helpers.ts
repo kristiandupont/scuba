@@ -30,7 +30,7 @@ export async function getNodesAtCursors(editor: vscode.TextEditor) {
   );
 }
 
-export function isFunctionDefinition(node: any): boolean {
+export function isFunctionDefinitionNode(node: any): boolean {
   return [
     "function_definition",
     "function_declaration",
@@ -44,22 +44,22 @@ export function isParametersNode(node: any): boolean {
   return ["parameters", "formal_parameters"].includes(node.type);
 }
 
-export function isParameterNode(node: any): boolean {
+export function isParameterOrArgumentNode(node: any): boolean {
+  if (!node.parent) {
+    return false;
+  }
+
+  const parentType = node.parent.type;
   return [
-    "parameter",
-    "typed_parameter",
-    "required_parameter",
-    "typed_required_parameter",
-    "default_parameter",
-    "typed_default_parameter",
-    "optional_parameter",
-    "typed_optional_parameter",
-  ].includes(node.type);
+    "parameters",
+    "formal_parameters",
+    "arguments",
+    "argument_list",
+    "tuple",
+  ].includes(parentType);
 }
 
-export function isTagElement(node: any): boolean {
-  // Check if the node is a JSX or HTML element
-  // This should be adapted to the specific Tree-sitter grammar being used
+export function isElementNode(node: any): boolean {
   return [
     // JSX types
     "jsx_element",
@@ -70,6 +70,24 @@ export function isTagElement(node: any): boolean {
   ].includes(node.type);
 }
 
-export function isComment(node: any): boolean {
+export function isCommentNode(node: any): boolean {
   return ["comment", "line_comment"].includes(node.type);
+}
+
+export function isPropertyLikeNode(node: any): boolean {
+  if (!node.parent) {
+    return false;
+  }
+
+  const parentType = node.parent.type;
+  return [
+    "dictionary",
+    "object",
+    "object_pattern",
+    "class_body",
+    "interface_body",
+    "type_literal",
+    "array",
+    "array_pattern",
+  ].includes(parentType);
 }

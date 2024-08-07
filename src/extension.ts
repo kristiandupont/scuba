@@ -305,6 +305,10 @@ export function activate(context: vscode.ExtensionContext) {
       changeMode({ mode: defaultMode });
     })
   );
+
+  // vscode.workspace.onDidChangeTextDocument((event) => {
+  //     console.log('Change detected:', event);
+  // });
 }
 
 function activateAdditionalCommands(context: vscode.ExtensionContext) {

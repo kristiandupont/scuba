@@ -21,11 +21,12 @@ function makeCharSearchHandler(
       }
       const position = textEditor.document.positionAt(nextOccurrence);
 
+      const cursorPosition = includeFoundChar
+        ? position.translate(0, 1)
+        : position;
+
       // Select from original start to found char:
-      return new vscode.Selection(
-        selection.start,
-        includeFoundChar ? position.translate(0, 1) : position
-      );
+      return new vscode.Selection(cursorPosition, cursorPosition);
     });
 
     textEditor.selections = newSelections;

@@ -23,7 +23,7 @@ export function getNodeFromSelection(
   );
 }
 
-export async function getNodesAtCursors(editor: vscode.TextEditor) {
+export function getNodesAtCursors(editor: vscode.TextEditor) {
   const selections = editor.selections || [];
   return selections.map((selection) =>
     getNodeFromSelection(selection, editor.document)

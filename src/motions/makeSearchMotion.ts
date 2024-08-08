@@ -25,7 +25,7 @@ export function makeSearchMotion(
     }
 
     if (mode === "inclusive") {
-      return [new vscode.Selection(s.anchor, newActive)];
+      return [new vscode.Selection(s.anchor, newActive.translate(0, 1))];
     } else {
       return [new vscode.Selection(s.anchor, newActive)];
     }

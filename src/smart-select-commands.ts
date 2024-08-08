@@ -5,6 +5,7 @@ import {
   isParameterOrArgumentNode,
   isParametersNode,
   isElementNode,
+  getNodeFromSelection,
 } from "./utilities/tree-sitter-helpers";
 
 export async function selectSiblingNode(direction: "next" | "prev") {
@@ -13,19 +14,9 @@ export async function selectSiblingNode(direction: "next" | "prev") {
     return;
   }
 
-  let nodes = await getNodesAtCursors(editor);
-
-  const newSelections = nodes
-    .map((node) => {
-      // while (
-      //   (direction === "next" && !node.nextNamedSibling) ||
-      //   (direction === "prev" && !node.previousNamedSibling)
-      // ) {
-      //   node = node.parent;
-      //   if (!node) {
-      //     return;
-      //   }
-      // }
+  const newSelections = editor.selections
+    .map((selection) => {
+      let node = getNodeFromSelection(selection, editor.document);
 
       node =
         direction === "next"
@@ -33,7 +24,79 @@ export async function selectSiblingNode(direction: "next" | "prev") {
           : node.previousNamedSibling;
 
       if (!node) {
-        return;
+        return selection;
+      }
+
+      const start = node.startPosition;
+      const end = node.endPosition;
+      return new vscode.Selection(start.row, start.column, end.row, end.column);
+    })
+    .filter((selection) => selection) as vscode.Selection[];
+
+  editor.selections = newSelections;
+
+  editor.revealRange(editor.selection);
+}
+
+export function selectParentNode() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const newSelections = editor.selections
+    .map((selection) => {
+      let currentNode = getNodeFromSelection(selection, editor.document);
+      let node = currentNode;
+
+      while (
+        node &&
+        node.startPosition.column === currentNode.startPosition.column &&
+        node.startPosition.row === currentNode.startPosition.row &&
+        node.endPosition.column === currentNode.endPosition.column &&
+        node.endPosition.row === currentNode.endPosition.row
+      ) {
+        node = node.parent;
+      }
+
+      if (!node) {
+        return selection;
+      }
+
+      const start = node.startPosition;
+      const end = node.endPosition;
+      return new vscode.Selection(start.row, start.column, end.row, end.column);
+    })
+    .filter((selection) => selection) as vscode.Selection[];
+
+  editor.selections = newSelections;
+
+  editor.revealRange(editor.selection);
+}
+
+export function selectFirstChildNode() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const newSelections = editor.selections
+    .map((selection) => {
+      let currentNode = getNodeFromSelection(selection, editor.document);
+      let node = currentNode;
+
+      while (
+        node &&
+        node.startPosition.column === currentNode.startPosition.column &&
+        node.startPosition.row === currentNode.startPosition.row &&
+        node.endPosition.column === currentNode.endPosition.column &&
+        node.endPosition.row === currentNode.endPosition.row
+      ) {
+        node = node.firstNamedChild;
+      }
+
+      if (!node) {
+        return selection;
       }
 
       const start = node.startPosition;
@@ -48,13 +111,13 @@ export async function selectSiblingNode(direction: "next" | "prev") {
 }
 
 // Select the first parameter in the function definition that the cursor is in:
-async function selectFirstParameter() {
+function selectFirstParameter() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
 
-  let nodes = await getNodesAtCursors(editor);
+  let nodes = getNodesAtCursors(editor);
 
   const newSelections = nodes
     .map((node) => {
@@ -109,13 +172,13 @@ async function selectFirstParameter() {
   editor.revealRange(editor.selection);
 }
 
-async function selectElement() {
+function selectElement() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
 
-  let nodes = await getNodesAtCursors(editor);
+  let nodes = getNodesAtCursors(editor);
   const newSelections = nodes
     .map((node) => {
       // Trace upwards to find the nearest JSX tag
@@ -141,13 +204,13 @@ async function selectElement() {
 
 // Create two selections per cursor: one that selects the name part of the opening tag
 // and one that selects the name part of the closing tag:
-async function selectTagName() {
+function selectTagName() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
 
-  let nodes = await getNodesAtCursors(editor);
+  let nodes = getNodesAtCursors(editor);
   const newSelections = nodes
     .flatMap((node) => {
       // Trace upwards to find the nearest JSX element

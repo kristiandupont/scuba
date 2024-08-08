@@ -6,6 +6,10 @@ import {
   restoreSelections,
   storeSelections,
 } from "./utilities/selection";
+import {
+  selectFirstChildNode,
+  selectParentNode,
+} from "./smart-select-commands";
 
 export const smartSelectMode: Mode = {
   isInsertMode: false,
@@ -24,8 +28,20 @@ export const smartSelectMode: Mode = {
   handleSubCommandChain: makeSubChainHandler([
     { keys: "<up>", command: "scuba.selectPrevSibling" },
     { keys: "<down>", command: "scuba.selectNextSibling" },
-    { keys: "<left>", command: "editor.action.smartSelect.shrink" },
-    { keys: "<right>", command: "editor.action.smartSelect.expand" },
+    {
+      keys: "<left>",
+      command: async () => {
+        selectFirstChildNode();
+      },
+    },
+    {
+      keys: "<right>",
+      command: async () => {
+        selectParentNode();
+      },
+    },
+    { keys: "<a-left>", command: "editor.action.smartSelect.shrink" },
+    { keys: "<a-right>", command: "editor.action.smartSelect.expand" },
     { keys: "p", command: "scuba.selectFirstParameter" },
     { keys: "e", command: "scuba.selectElement" },
     { keys: "t", command: "scuba.selectTagName", leaveInMode: "insert" },

@@ -1,11 +1,7 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
-import {
-  isAnyTextSelected,
-  restoreSelections,
-  storeSelections,
-} from "./utilities/selection";
+import { isAnyTextSelected, storeSelections } from "./utilities/selection";
 import {
   selectFirstChildNode,
   selectParentNode,

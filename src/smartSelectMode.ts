@@ -38,7 +38,7 @@ export const smartSelectMode: Mode = {
     { keys: "<up>", command: "scuba.selectPrevSibling" },
     { keys: "<down>", command: "scuba.selectNextSibling" },
 
-    { keys: "<a-up>", command: async () => moveSiblingNode("prev") },
+    { keys: "<a-up>", command: async () => moveSiblingNode("previous") },
     { keys: "<a-down>", command: async () => moveSiblingNode("next") },
 
     { keys: "<c-left>", command: "editor.action.smartSelect.expand" },

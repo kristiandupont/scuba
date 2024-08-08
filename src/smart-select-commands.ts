@@ -52,16 +52,15 @@ export async function selectSiblingNode(direction: "next" | "prev") {
   editor.revealRange(editor.selection);
 }
 
-export async function moveSiblingNode(direction: "next" | "prev") {
+export async function moveSiblingNode(direction: "next" | "previous") {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
 
-  const newSelections = editor.selections
-    .map((selection) => {
+  const newSelections = await Promise.all(
+    editor.selections.map(async (selection) => {
       let node = getNodeFromSelection(selection, editor.document);
-
       while (
         node.parent &&
         node.parent.startPosition.column === node.startPosition.column &&
@@ -85,51 +84,75 @@ export async function moveSiblingNode(direction: "next" | "prev") {
         return selection;
       }
 
-      const start = new vscode.Position(
-        node.startPosition.row,
-        node.startPosition.column
+      const oldText = editor.document.getText(
+        new vscode.Range(
+          new vscode.Position(
+            node.startPosition.row,
+            node.startPosition.column
+          ),
+          new vscode.Position(node.endPosition.row, node.endPosition.column)
+        )
       );
-      const end = new vscode.Position(
-        node.endPosition.row,
-        node.endPosition.column
-      );
-      const siblingStart = new vscode.Position(
-        sibling.startPosition.row,
-        sibling.startPosition.column
-      );
-      const siblingEnd = new vscode.Position(
-        sibling.endPosition.row,
-        sibling.endPosition.column
-      );
-
-      const oldText = editor.document.getText(new vscode.Range(start, end));
       const newText = editor.document.getText(
-        new vscode.Range(siblingStart, siblingEnd)
+        new vscode.Range(
+          new vscode.Position(
+            sibling.startPosition.row,
+            sibling.startPosition.column
+          ),
+          new vscode.Position(
+            sibling.endPosition.row,
+            sibling.endPosition.column
+          )
+        )
       );
 
-      editor.edit((editBuilder) => {
-        editBuilder.replace(new vscode.Range(start, end), newText);
+      await editor.edit((editBuilder) => {
         editBuilder.replace(
-          new vscode.Range(siblingStart, siblingEnd),
+          new vscode.Range(
+            new vscode.Position(
+              node.startPosition.row,
+              node.startPosition.column
+            ),
+            new vscode.Position(node.endPosition.row, node.endPosition.column)
+          ),
+          newText
+        );
+        editBuilder.replace(
+          new vscode.Range(
+            new vscode.Position(
+              sibling.startPosition.row,
+              sibling.startPosition.column
+            ),
+            new vscode.Position(
+              sibling.endPosition.row,
+              sibling.endPosition.column
+            )
+          ),
           oldText
         );
       });
 
-      // return new vscode.Selection(
-      //   siblingStart,
-      //   new vscode.Position(
-      //     siblingStart.line + (end.line - start.line),
-      //     siblingStart.character + (end.character - start.character)
-      //   )
-      // );
+      // Calculate the new selection range based on the original selection and the new node positions
+      const newStart = new vscode.Position(
+        selection.start.line +
+          (node.startPosition.line - sibling.startPosition.line),
+        selection.start.character +
+          (node.startPosition.character - sibling.startPosition.character)
+      );
+      const newEnd = new vscode.Position(
+        selection.end.line + (node.endPosition.line - sibling.endPosition.line),
+        selection.end.character +
+          (node.endPosition.character - sibling.endPosition.character)
+      );
+      return new vscode.Selection(newStart, newEnd);
     })
-    .filter((selection) => selection) as vscode.Selection[];
+  );
 
-  editor.selections = newSelections;
-
+  editor.selections = newSelections.filter(
+    (selection) => selection
+  ) as vscode.Selection[];
   editor.revealRange(editor.selection);
 }
-
 export function selectParentNode() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {

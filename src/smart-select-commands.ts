@@ -18,6 +18,20 @@ export async function selectSiblingNode(direction: "next" | "prev") {
     .map((selection) => {
       let node = getNodeFromSelection(selection, editor.document);
 
+      while (
+        node.parent &&
+        node.parent.startPosition.column === node.startPosition.column &&
+        node.parent.startPosition.row === node.startPosition.row &&
+        node.parent.endPosition.column === node.endPosition.column &&
+        node.parent.endPosition.row === node.endPosition.row
+      ) {
+        node = node.parent;
+      }
+
+      if (!node) {
+        return selection;
+      }
+
       node =
         direction === "next"
           ? node.nextNamedSibling

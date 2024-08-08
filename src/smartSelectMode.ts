@@ -22,7 +22,7 @@ export const smartSelectMode: Mode = {
     }
     storeSelections(editor);
     if (!isAnyTextSelected(editor)) {
-      await vscode.commands.executeCommand("editor.action.smartSelect.expand");
+      selectParentNode();
     }
   },
   handleSubCommandChain: makeSubChainHandler([
@@ -31,17 +31,17 @@ export const smartSelectMode: Mode = {
     {
       keys: "<left>",
       command: async () => {
-        selectFirstChildNode();
+        selectParentNode();
       },
     },
     {
       keys: "<right>",
       command: async () => {
-        selectParentNode();
+        selectFirstChildNode();
       },
     },
-    { keys: "<a-left>", command: "editor.action.smartSelect.shrink" },
-    { keys: "<a-right>", command: "editor.action.smartSelect.expand" },
+    { keys: "<a-left>", command: "editor.action.smartSelect.expand" },
+    { keys: "<a-right>", command: "editor.action.smartSelect.shrink" },
     { keys: "p", command: "scuba.selectFirstParameter" },
     { keys: "e", command: "scuba.selectElement" },
     { keys: "t", command: "scuba.selectTagName", leaveInMode: "insert" },

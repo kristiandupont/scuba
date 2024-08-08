@@ -65,12 +65,12 @@ const normalKeyMap: KeyMap = [
   },
   { keys: "D", command: "editor.action.deleteLines" },
   {
-    keys: "p",
+    keys: "P",
     command: "editor.action.clipboardPasteAction",
     leaveInMode: defaultMode,
   },
   {
-    keys: "P",
+    keys: "p",
     command: async function () {
       await vscode.commands.executeCommand("cursorRight");
       await vscode.commands.executeCommand(
@@ -193,5 +193,8 @@ export const normalMode: Mode = {
   isInsertMode: false,
   name: "normal",
   statusItemText: "Normal",
+  onEnter: async function () {
+    vscode.commands.executeCommand("cancelSelection");
+  },
   handleSubCommandChain: makeSubChainHandler(normalKeyMap),
 };

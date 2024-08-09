@@ -148,7 +148,7 @@ export function makeSubChainHandler(
           }
         } else {
           for (let i = 0; i < count; i++) {
-            vscode.commands.executeCommand(
+            await vscode.commands.executeCommand(
               keyDefinition.command,
               keyDefinition.args
             );

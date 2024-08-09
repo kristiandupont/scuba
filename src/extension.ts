@@ -14,6 +14,7 @@ import {
   yankObjectMode,
 } from "./verb-object-modes";
 import { findCharMode, tillCharMode } from "./char-search-modes";
+import { goToLineMode } from "./goToLineMode";
 
 export const defaultMode = "normal";
 
@@ -192,6 +193,7 @@ const modes: Mode[] = [
   sneakMode,
   findCharMode,
   tillCharMode,
+  goToLineMode,
 ];
 
 function updateModeIndicator() {

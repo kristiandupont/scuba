@@ -187,6 +187,8 @@ const normalKeyMap: KeyMap = [
   { keys: "  ", leaveInMode: sneakMode.name },
 
   { keys: " s", leaveInMode: surroundMode.name },
+
+  { keys: ":", leaveInMode: "go-to-line" },
 ];
 
 export const normalMode: Mode = {

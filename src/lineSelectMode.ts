@@ -33,6 +33,8 @@ export const lineSelectMode: Mode = {
   handleSubCommandChain: makeSubChainHandler([
     { keys: "<up>", command: "cursorUpSelect" },
     { keys: "<down>", command: "cursorDownSelect" },
+    { keys: "<pageup>", command: "cursorPageUpSelect" },
+    { keys: "<pagedown>", command: "cursorPageDownSelect" },
 
     { keys: "v", leaveInMode: "select" },
     { keys: "S", leaveInMode: "smart-select" },

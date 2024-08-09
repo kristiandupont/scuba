@@ -7,6 +7,7 @@ import {
   isElementNode,
   getNodeFromSelection,
 } from "./utilities/tree-sitter-helpers";
+import { SyntaxNode } from "web-tree-sitter";
 
 export async function selectSiblingNode(direction: "next" | "prev") {
   const editor = vscode.window.activeTextEditor;
@@ -16,7 +17,10 @@ export async function selectSiblingNode(direction: "next" | "prev") {
 
   const newSelections = editor.selections
     .map((selection) => {
-      let node = getNodeFromSelection(selection, editor.document);
+      let node: SyntaxNode | null = getNodeFromSelection(
+        selection,
+        editor.document
+      );
 
       while (
         node.parent &&
@@ -52,13 +56,13 @@ export async function selectSiblingNode(direction: "next" | "prev") {
   editor.revealRange(editor.selection);
 }
 
-export async function moveSiblingNode(direction: "next" | "previous") {
+export async function moveSiblingNode(direction: "next" | "prev") {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
 
-  const newSelections = await Promise.all(
+  await Promise.all(
     editor.selections.map(async (selection) => {
       let node = getNodeFromSelection(selection, editor.document);
       while (
@@ -84,7 +88,7 @@ export async function moveSiblingNode(direction: "next" | "previous") {
         return selection;
       }
 
-      const oldText = editor.document.getText(
+      const selectedText = editor.document.getText(
         new vscode.Range(
           new vscode.Position(
             node.startPosition.row,
@@ -93,7 +97,7 @@ export async function moveSiblingNode(direction: "next" | "previous") {
           new vscode.Position(node.endPosition.row, node.endPosition.column)
         )
       );
-      const newText = editor.document.getText(
+      const siblingText = editor.document.getText(
         new vscode.Range(
           new vscode.Position(
             sibling.startPosition.row,
@@ -110,16 +114,6 @@ export async function moveSiblingNode(direction: "next" | "previous") {
         editBuilder.replace(
           new vscode.Range(
             new vscode.Position(
-              node.startPosition.row,
-              node.startPosition.column
-            ),
-            new vscode.Position(node.endPosition.row, node.endPosition.column)
-          ),
-          newText
-        );
-        editBuilder.replace(
-          new vscode.Range(
-            new vscode.Position(
               sibling.startPosition.row,
               sibling.startPosition.column
             ),
@@ -128,31 +122,28 @@ export async function moveSiblingNode(direction: "next" | "previous") {
               sibling.endPosition.column
             )
           ),
-          oldText
+          selectedText
+        );
+        editBuilder.replace(
+          new vscode.Range(
+            new vscode.Position(
+              node.startPosition.row,
+              node.startPosition.column
+            ),
+            new vscode.Position(node.endPosition.row, node.endPosition.column)
+          ),
+          siblingText
         );
       });
-
-      // Calculate the new selection range based on the original selection and the new node positions
-      const newStart = new vscode.Position(
-        selection.start.line +
-          (node.startPosition.line - sibling.startPosition.line),
-        selection.start.character +
-          (node.startPosition.character - sibling.startPosition.character)
-      );
-      const newEnd = new vscode.Position(
-        selection.end.line + (node.endPosition.line - sibling.endPosition.line),
-        selection.end.character +
-          (node.endPosition.character - sibling.endPosition.character)
-      );
-      return new vscode.Selection(newStart, newEnd);
     })
   );
 
-  editor.selections = newSelections.filter(
-    (selection) => selection
-  ) as vscode.Selection[];
-  editor.revealRange(editor.selection);
+  // This seems like a hack but the way the edits work above, the selection
+  // will actually match the replaced sibling. So this step is exactly what
+  // we want to do.
+  selectSiblingNode(direction);
 }
+
 export function selectParentNode() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
@@ -162,7 +153,7 @@ export function selectParentNode() {
   const newSelections = editor.selections
     .map((selection) => {
       let currentNode = getNodeFromSelection(selection, editor.document);
-      let node = currentNode;
+      let node: SyntaxNode | null = currentNode;
 
       while (
         node &&
@@ -198,7 +189,7 @@ export function selectFirstChildNode() {
   const newSelections = editor.selections
     .map((selection) => {
       let currentNode = getNodeFromSelection(selection, editor.document);
-      let node = currentNode;
+      let node: SyntaxNode | null = currentNode;
 
       while (
         node &&

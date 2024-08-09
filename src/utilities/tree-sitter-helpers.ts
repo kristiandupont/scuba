@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 const parseTreeExtension = vscode.extensions.getExtension("pokey.parse-tree");
 
+import type { SyntaxNode } from "web-tree-sitter";
+
 let getTreeForUri: any;
 
 export function getNodeFromSelection(
@@ -20,7 +22,7 @@ export function getNodeFromSelection(
   return getTreeForUri(document.uri)?.rootNode.namedDescendantForPosition(
     { row: range.start.line, column: range.start.character },
     { row: range.end.line, column: range.end.character }
-  );
+  ) as SyntaxNode;
 }
 
 export function getNodesAtCursors(editor: vscode.TextEditor) {

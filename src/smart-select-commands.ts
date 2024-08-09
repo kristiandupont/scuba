@@ -144,6 +144,26 @@ export async function moveSiblingNode(direction: "next" | "prev") {
   selectSiblingNode(direction);
 }
 
+export function selectCurrentNode() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const newSelections = editor.selections
+    .map((selection) => {
+      const node = getNodeFromSelection(selection, editor.document);
+      const start = node.startPosition;
+      const end = node.endPosition;
+      return new vscode.Selection(start.row, start.column, end.row, end.column);
+    })
+    .filter((selection) => selection) as vscode.Selection[];
+
+  editor.selections = newSelections;
+
+  editor.revealRange(editor.selection);
+}
+
 export function selectParentNode() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {

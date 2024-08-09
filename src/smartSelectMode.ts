@@ -4,6 +4,7 @@ import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { isAnyTextSelected, storeSelections } from "./utilities/selection";
 import {
   moveSiblingNode,
+  selectCurrentNode,
   selectFirstChildNode,
   selectParentNode,
 } from "./smart-select-commands";
@@ -19,7 +20,7 @@ export const smartSelectMode: Mode = {
     }
     storeSelections(editor);
     if (!isAnyTextSelected(editor)) {
-      selectParentNode();
+      selectCurrentNode();
     }
   },
   handleSubCommandChain: makeSubChainHandler([

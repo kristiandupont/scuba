@@ -37,7 +37,7 @@ function makeCharSearchHandler(
 export const findCharMode: Mode = {
   isInsertMode: false,
   name: "find-char/inclusive",
-  statusItemText: "Select up to and including char",
+  statusItemText: "Find char",
   color: new vscode.ThemeColor("editor.foreground"),
 
   handleSubCommandChain: makeCharSearchHandler(true),
@@ -46,7 +46,7 @@ export const findCharMode: Mode = {
 export const tillCharMode: Mode = {
   isInsertMode: false,
   name: "find-char/exclusive",
-  statusItemText: "Select up to but not including char",
+  statusItemText: "Go until char",
   color: new vscode.ThemeColor("editor.foreground"),
 
   handleSubCommandChain: makeCharSearchHandler(false),

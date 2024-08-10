@@ -48,9 +48,6 @@ export const smartSelectMode: Mode = {
     { keys: "e", command: "scuba.selectElement" },
     { keys: "t", command: "scuba.selectTagName", leaveInMode: "insert" },
 
-    { keys: "v", leaveInMode: "select" },
-    { keys: "V", leaveInMode: "line-select" },
-
     ...sharedSelectionKeys,
   ]),
 };

@@ -23,10 +23,12 @@ export const sharedSelectionKeys: KeyMap = [
     command: "editor.action.clipboardPasteAction",
     leaveInMode: defaultMode,
   },
-  {
-    keys: "s",
-    leaveInMode: "surround",
-  },
+
+  { keys: "v", leaveInMode: "select" },
+  { keys: "V", leaveInMode: "line-select" },
+  { keys: "S", leaveInMode: "smart-select" },
+  { keys: "s", leaveInMode: "surround" },
+
   { keys: "gc", command: "editor.action.commentLine" },
   {
     keys: "zz",

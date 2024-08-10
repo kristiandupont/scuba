@@ -113,9 +113,6 @@ const normalKeyMap: KeyMap = [
   { keys: "#", command: "findWordAtCursor.previous" },
   { keys: "@", command: "editor.action.addSelectionToNextFindMatch" },
 
-  { keys: "f", leaveInMode: "find-char/inclusive" },
-  { keys: "t", leaveInMode: "find-char/exclusive" },
-
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },
   { keys: " c", command: "textmarker.clearAllHighlight" },
@@ -171,24 +168,19 @@ const normalKeyMap: KeyMap = [
   },
 
   { keys: "v", leaveInMode: selectMode.name },
+  { keys: "V", leaveInMode: lineSelectMode.name },
+  { keys: "S", leaveInMode: smartSelectMode.name },
+
   { keys: "c", leaveInMode: changeObjectMode.name },
   { keys: "y", leaveInMode: yankObjectMode.name },
   { keys: "d", leaveInMode: deleteObjectMode.name },
 
-  // Replace char mode (r)
   { keys: "r", leaveInMode: replaceCharMode.name },
 
-  // Line select mode (v)
-  { keys: "V", leaveInMode: lineSelectMode.name },
-
-  // Smart select mode (s)
-  { keys: "S", leaveInMode: smartSelectMode.name },
-
-  { keys: "  ", leaveInMode: sneakMode.name },
-
-  { keys: " s", leaveInMode: surroundMode.name },
-
   { keys: ":", leaveInMode: "go-to-line" },
+  { keys: "f", leaveInMode: "find-char/inclusive" },
+  { keys: "t", leaveInMode: "find-char/exclusive" },
+  { keys: "  ", leaveInMode: sneakMode.name },
 ];
 
 export const normalMode: Mode = {

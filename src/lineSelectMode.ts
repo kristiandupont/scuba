@@ -36,9 +36,6 @@ export const lineSelectMode: Mode = {
     { keys: "<pageup>", command: "cursorPageUpSelect" },
     { keys: "<pagedown>", command: "cursorPageDownSelect" },
 
-    { keys: "v", leaveInMode: "select" },
-    { keys: "S", leaveInMode: "smart-select" },
-
     ...sharedSelectionKeys,
   ]),
 };

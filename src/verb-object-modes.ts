@@ -106,9 +106,6 @@ const selectSubChainHandler = makeSubChainHandler(
     { keys: "<pageup>", command: "cursorPageUpSelect" },
     { keys: "<pagedown>", command: "cursorPageDownSelect" },
 
-    { keys: "S", leaveInMode: "smart-select" },
-    { keys: "V", leaveInMode: "line-select" },
-
     ...sharedSelectionKeys,
   ],
   undefined, // leaveInMode -- don't change after a subcommand

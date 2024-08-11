@@ -12,7 +12,6 @@ import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
-import { surroundMode } from "./surroundMode";
 import { restoreSelections } from "./utilities/selection";
 
 const normalKeyMap: KeyMap = [

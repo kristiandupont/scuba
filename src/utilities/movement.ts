@@ -20,3 +20,12 @@ export async function moveCursorsRightUnlessTheyAreAtEOL(
   });
   textEditor.selections = newSelections;
 }
+
+export function moveCursorsToStartOfLine(textEditor: vscode.TextEditor) {
+  const selections = textEditor.selections;
+  const newSelections = selections.map((selection) => {
+    const position = selection.active.with({ character: 0 });
+    return new vscode.Selection(position, position);
+  });
+  textEditor.selections = newSelections;
+}

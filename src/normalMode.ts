@@ -1,6 +1,9 @@
 import * as vscode from "vscode";
 import { defaultMode, KeyMap, makeSubChainHandler, Mode } from "./extension";
-import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
+import {
+  moveCursorsRightUnlessTheyAreAtEOL,
+  moveCursorsToStartOfLine,
+} from "./utilities/movement";
 import {
   changeObjectMode,
   deleteObjectMode,
@@ -55,6 +58,7 @@ const normalKeyMap: KeyMap = [
     // Clear the whole line and leave the cursor in insert mode, on the
     // character that matches indentation:
     command: async function () {
+      moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
       await vscode.commands.executeCommand("cursorHome");
       await vscode.commands.executeCommand("deleteAllRight");
       await vscode.commands.executeCommand("scuba.changeMode", {
@@ -80,9 +84,8 @@ const normalKeyMap: KeyMap = [
   {
     keys: "π",
     command: async function () {
-      // Insert a newline and paste the clipboard contents
-      await vscode.commands.executeCommand("editor.action.insertLineAfter");
-      await vscode.commands.executeCommand("cursorHome");
+      await vscode.commands.executeCommand("cursorDown");
+      moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
       await vscode.commands.executeCommand(
         "editor.action.clipboardPasteAction"
       );
@@ -93,8 +96,8 @@ const normalKeyMap: KeyMap = [
   { keys: "U", command: "redo" },
 
   // Scroll the window up or down one line:
-  { keys: "k", command: "scrollLineUp" },
-  { keys: "j", command: "scrollLineDown" },
+  { keys: "<c-up>", command: "scrollLineUp" },
+  { keys: "<c-down>", command: "scrollLineDown" },
 
   {
     keys: "w",

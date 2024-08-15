@@ -24,34 +24,30 @@ let currentMode: string = defaultMode;
 
 let activeCommandChain: string[] = [];
 
-export type Mode =
-  | {
-      isInsertMode: true;
-      name: string;
-      statusItemText: string;
-      color?: vscode.ThemeColor;
-      backgroundColor?: vscode.ThemeColor;
-      cursorStyle?: vscode.TextEditorCursorStyle;
-    }
+export type Mode = {
+  name: string;
+  statusItemText: string;
+  onEnter?: (previousMode: string) => Promise<void>;
+  onExit?: () => Promise<void>;
+  color?: vscode.ThemeColor;
+  backgroundColor?: vscode.ThemeColor;
+  cursorStyle?: vscode.TextEditorCursorStyle;
+} & (
+  | { isInsertMode: true }
   | {
       isInsertMode: false;
-      name: string;
-      statusItemText: string;
       handleSubCommandChain: (
         keys: string,
         textEditor: vscode.TextEditor
       ) => Promise<void>;
-      onEnter?: () => Promise<void>;
-      onExit?: () => Promise<void>;
-      color?: vscode.ThemeColor;
-      backgroundColor?: vscode.ThemeColor;
-      cursorStyle?: vscode.TextEditorCursorStyle;
-    };
+    }
+);
 
 export async function changeMode({ mode: modeName }: { mode: string }) {
-  const previousMode = currentMode
-    ? modes.find((mode) => mode.name === currentMode)
-    : null;
+  const previousMode = modes.find((mode) => mode.name === currentMode);
+  if (!previousMode) {
+    throw new Error(`Unknown mode: ${currentMode}`);
+  }
 
   if (previousMode && !previousMode.isInsertMode && previousMode.onExit) {
     previousMode.onExit();
@@ -65,8 +61,8 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
 
   currentMode = modeName;
   resetCommandChain();
-  if (!mode.isInsertMode && mode.onEnter) {
-    mode.onEnter();
+  if (mode.onEnter) {
+    mode.onEnter(previousMode?.name);
   }
 
   vscode.commands.executeCommand(

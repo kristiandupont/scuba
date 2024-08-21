@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
-import { isAnyTextSelected, storeSelections } from "./utilities/selection";
+import { isAnyTextSelected, pushSelections } from "./utilities/selection";
 import {
   moveSiblingNode,
   selectCurrentNode,
@@ -18,7 +18,7 @@ export const smartSelectMode: Mode = {
     if (!editor) {
       return;
     }
-    storeSelections(editor);
+    pushSelections(editor);
     if (!isAnyTextSelected(editor)) {
       selectCurrentNode();
     }
@@ -27,12 +27,14 @@ export const smartSelectMode: Mode = {
     {
       keys: "<left>",
       command: async () => {
+        pushSelections(vscode.window.activeTextEditor!);
         selectParentNode();
       },
     },
     {
       keys: "<right>",
       command: async () => {
+        pushSelections(vscode.window.activeTextEditor!);
         selectFirstChildNode();
       },
     },

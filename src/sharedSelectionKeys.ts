@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { defaultMode, KeyMap } from "./extension";
-import { lineModeAwarePaste, restoreSelections } from "./utilities/selection";
+import { lineModeAwarePaste, popSelections } from "./utilities/selection";
 
 export const sharedSelectionKeys: KeyMap = [
   {
@@ -64,7 +64,7 @@ export const sharedSelectionKeys: KeyMap = [
       if (!editor) {
         return;
       }
-      restoreSelections(editor);
+      popSelections(editor);
     },
   },
 ];

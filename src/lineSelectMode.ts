@@ -2,10 +2,9 @@ import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import {
-  lineModeAwarePaste,
   lineModeCopy,
   lineModeCut,
-  storeSelections,
+  pushSelections,
 } from "./utilities/selection";
 
 // Omit yank and delete because we're overriding those with the line mode versions
@@ -26,7 +25,7 @@ export const lineSelectMode: Mode = {
       return;
     }
 
-    storeSelections(editor);
+    pushSelections(editor);
 
     const selections = editor.selections.map((selection) => {
       const start = selection.start.with({ character: 0 });

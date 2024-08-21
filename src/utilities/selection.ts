@@ -1,18 +1,23 @@
 import * as vscode from "vscode";
 
-let previousSelections: readonly vscode.Selection[] | undefined;
-
 export function isAnyTextSelected(textEditor: vscode.TextEditor) {
   return textEditor.selections.some((selection) => {
     return !selection.isEmpty;
   });
 }
 
-export function storeSelections(textEditor: vscode.TextEditor) {
-  previousSelections = textEditor.selections;
+let previousSelectionsStack: (readonly vscode.Selection[])[] = [];
+
+export function pushSelections(textEditor: vscode.TextEditor) {
+  previousSelectionsStack.push(textEditor.selections);
+
+  if (previousSelectionsStack.length > 32) {
+    previousSelectionsStack.shift();
+  }
 }
 
-export function restoreSelections(textEditor: vscode.TextEditor) {
+export function popSelections(textEditor: vscode.TextEditor) {
+  const previousSelections = previousSelectionsStack.pop();
   if (previousSelections) {
     textEditor.selections = previousSelections;
     textEditor.revealRange(textEditor.selection);
@@ -88,7 +93,7 @@ export function lineModeAwarePaste(
       });
     } else {
       // If it's not line mode, perform a regular paste operation
-      if (place === "after") {
+      if (place === "after" && !isAnyTextSelected(editor)) {
         vscode.commands.executeCommand("cursorRight");
       }
       vscode.commands.executeCommand("editor.action.clipboardPasteAction");

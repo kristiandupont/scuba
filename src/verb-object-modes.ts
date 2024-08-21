@@ -9,7 +9,7 @@ import {
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
 import { makeSearchMotion } from "./motions/makeSearchMotion";
-import { isAnyTextSelected, storeSelections } from "./utilities/selection";
+import { isAnyTextSelected, pushSelections } from "./utilities/selection";
 import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
 
 function applyMotion(
@@ -125,7 +125,7 @@ export const selectMode: Mode = {
       return;
     }
 
-    storeSelections(editor);
+    pushSelections(editor);
 
     if (!isAnyTextSelected(editor)) {
       moveCursorsRightUnlessTheyAreAtEOL(1, editor);

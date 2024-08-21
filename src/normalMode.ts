@@ -18,7 +18,7 @@ import { insertMode } from "./insertMode";
 import {
   lineModeAwarePaste,
   lineModeCut,
-  restoreSelections,
+  popSelections,
 } from "./utilities/selection";
 
 const normalKeyMap: KeyMap = [
@@ -166,7 +166,7 @@ const normalKeyMap: KeyMap = [
       if (!editor) {
         return;
       }
-      restoreSelections(editor);
+      popSelections(editor);
     },
   },
 

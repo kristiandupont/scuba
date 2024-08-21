@@ -105,6 +105,7 @@ const selectSubChainHandler = makeSubChainHandler(
     { keys: "<end>", command: "cursorEndSelect" },
     { keys: "<pageup>", command: "cursorPageUpSelect" },
     { keys: "<pagedown>", command: "cursorPageDownSelect" },
+    { keys: "%", command: "editor.action.selectToBracket" },
 
     ...sharedSelectionKeys,
   ],

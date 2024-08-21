@@ -1,7 +1,17 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
-import { storeSelections } from "./utilities/selection";
+import {
+  lineModeAwarePaste,
+  lineModeCopy,
+  lineModeCut,
+  storeSelections,
+} from "./utilities/selection";
+
+// Omit yank and delete because we're overriding those with the line mode versions
+const selectionKeys = sharedSelectionKeys.filter(
+  (k) => !["y", "d"].includes(k.keys)
+);
 
 export const lineSelectMode: Mode = {
   isInsertMode: false,
@@ -36,6 +46,20 @@ export const lineSelectMode: Mode = {
     { keys: "<pageup>", command: "cursorPageUpSelect" },
     { keys: "<pagedown>", command: "cursorPageDownSelect" },
 
-    ...sharedSelectionKeys,
+    {
+      keys: "y",
+      command: async function () {
+        lineModeCopy(vscode.window.activeTextEditor!);
+      },
+      leaveInMode: "normal",
+    },
+    {
+      keys: "d",
+      command: async function () {
+        lineModeCut(vscode.window.activeTextEditor!);
+      },
+      leaveInMode: "normal",
+    },
+    ...selectionKeys,
   ]),
 };

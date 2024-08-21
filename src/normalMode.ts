@@ -15,7 +15,11 @@ import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
-import { restoreSelections } from "./utilities/selection";
+import {
+  lineModeAwarePaste,
+  lineModeCut,
+  restoreSelections,
+} from "./utilities/selection";
 
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
@@ -66,29 +70,24 @@ const normalKeyMap: KeyMap = [
       });
     },
   },
-  { keys: "D", command: "editor.action.deleteLines" },
   {
-    keys: "P",
-    command: "editor.action.clipboardPasteAction",
-    leaveInMode: defaultMode,
+    keys: "D",
+    command: async function () {
+      lineModeCut(vscode.window.activeTextEditor!);
+    },
   },
+  { keys: "Y", command: "editor.action.clipboardCopyAction" },
   {
     keys: "p",
     command: async function () {
-      await vscode.commands.executeCommand("cursorRight");
-      await vscode.commands.executeCommand(
-        "editor.action.clipboardPasteAction"
-      );
+      lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
     },
+    leaveInMode: defaultMode,
   },
   {
-    keys: "π",
+    keys: "P",
     command: async function () {
-      await vscode.commands.executeCommand("cursorDown");
-      moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
-      await vscode.commands.executeCommand(
-        "editor.action.clipboardPasteAction"
-      );
+      lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
     },
   },
 
@@ -114,6 +113,7 @@ const normalKeyMap: KeyMap = [
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
   { keys: "@", command: "editor.action.addSelectionToNextFindMatch" },
+  { keys: "%", command: "editor.action.jumpToBracket" },
 
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },
@@ -145,6 +145,7 @@ const normalKeyMap: KeyMap = [
   { keys: "gr", command: "references-view.findReferences" },
   { keys: "gh", command: "editor.action.showHover" },
   { keys: "gc", command: "editor.action.commentLine" },
+  { keys: "ge", command: "editor.action.marker.next" },
 
   // View "mode" (z)
   {

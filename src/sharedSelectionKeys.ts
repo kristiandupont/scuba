@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { defaultMode, KeyMap } from "./extension";
-import { restoreSelections } from "./utilities/selection";
+import { lineModeAwarePaste, restoreSelections } from "./utilities/selection";
 
 export const sharedSelectionKeys: KeyMap = [
   {
@@ -20,8 +20,16 @@ export const sharedSelectionKeys: KeyMap = [
   },
   {
     keys: "p",
-    command: "editor.action.clipboardPasteAction",
+    command: async function () {
+      lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
+    },
     leaveInMode: defaultMode,
+  },
+  {
+    keys: "P",
+    command: async function () {
+      lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
+    },
   },
 
   { keys: "v", leaveInMode: "select" },
@@ -42,10 +50,12 @@ export const sharedSelectionKeys: KeyMap = [
   {
     keys: "u",
     command: "editor.action.transformToLowercase",
+    leaveInMode: defaultMode,
   },
   {
     keys: "U",
     command: "editor.action.transformToUppercase",
+    leaveInMode: defaultMode,
   },
   {
     keys: "<backspace>",

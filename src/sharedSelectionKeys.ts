@@ -31,6 +31,8 @@ export const sharedSelectionKeys: KeyMap = [
       return lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
     },
   },
+  { keys: "<a-up>", command: "editor.action.moveLinesUpAction" },
+  { keys: "<a-down>", command: "editor.action.moveLinesDownAction" },
 
   { keys: "v", leaveInMode: "select" },
   { keys: "V", leaveInMode: "line-select" },

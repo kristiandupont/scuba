@@ -144,10 +144,17 @@ export function makeSubChainHandler(
             leaveInMode = leaveInOverride;
           }
         } else {
-          for (let i = 0; i < count; i++) {
-            await vscode.commands.executeCommand(
-              keyDefinition.command,
-              keyDefinition.args
+          try {
+            for (let i = 0; i < count; i++) {
+              await vscode.commands.executeCommand(
+                keyDefinition.command,
+                keyDefinition.args
+              );
+            }
+          } catch (e) {
+            vscode.window.showErrorMessage(
+              `Failed to execute command: ${keyDefinition.command}`,
+              (e as Error).message
             );
           }
         }

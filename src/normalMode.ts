@@ -66,10 +66,7 @@ const normalKeyMap: KeyMap = [
       });
     },
   },
-  {
-    keys: "D",
-    command: "editor.actions.clipboardCutAction",
-  },
+  { keys: "D", command: "editor.action.clipboardCutAction" },
   { keys: "Y", command: "editor.action.clipboardCopyAction" },
   {
     keys: "p",
@@ -100,14 +97,8 @@ const normalKeyMap: KeyMap = [
   { keys: "<c-up>", command: "scrollLineUp" },
   { keys: "<c-down>", command: "scrollLineDown" },
 
-  {
-    keys: "w",
-    command: "cursorWordStartRight",
-  },
-  {
-    keys: "b",
-    command: "cursorWordStartLeft",
-  },
+  { keys: "w", command: "cursorWordStartRight" },
+  { keys: "b", command: "cursorWordStartLeft" },
 
   { keys: "æ", command: "cursorWordPartRight" },
   { keys: "ø", command: "cursorWordPartLeft" },

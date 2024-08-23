@@ -24,80 +24,43 @@ export function popSelections(textEditor: vscode.TextEditor) {
   }
 }
 
-// const LINE_MODE_MARKER = "\uFEFF"; // Zero-width non-breaking space
-const LINE_MODE_MARKER = "\n";
-
-export function lineModeCopy(editor: vscode.TextEditor): void {
-  const document = editor.document;
-  const selections = editor.selections;
-
-  if (selections.length === 0 || selections.length > 1) {
-    // If there are no selections or multiple selections, perform a regular copy operation
-    vscode.commands.executeCommand("editor.action.clipboardCopyAction");
-    return;
-  }
-
-  let textToCopy = "";
-
-  selections.forEach((selection, index) => {
-    const start = selection.start.line;
-    const end = selection.end.line + (selection.end.character > 0 ? 1 : 0);
-
-    for (let i = start; i < end; i++) {
-      textToCopy += document.lineAt(i).text + "\n";
-    }
-
-    // Add an extra newline between selections, except for the last one
-    if (index < selections.length - 1) {
-      textToCopy += "\n";
-    }
-  });
-
-  // Remove the last newline if it exists
-  textToCopy = textToCopy.replace(/\n$/, "");
-
-  const markedText = LINE_MODE_MARKER + textToCopy;
-  vscode.env.clipboard.writeText(markedText);
-}
-
-export function lineModeCut(editor: vscode.TextEditor): void {
-  lineModeCopy(editor);
-
-  vscode.commands.executeCommand("deleteRight");
-}
-
-export function lineModeAwarePaste(
+export async function lineModeAwarePaste(
   editor: vscode.TextEditor,
   place: "before" | "after"
-): void {
+): Promise<void> {
   if (isAnyTextSelected(editor)) {
-    // If there are multiple selections, perform a regular paste operation
+    // If there are selections, perform a regular paste operation
     vscode.commands.executeCommand("editor.action.clipboardPasteAction");
     return;
   }
 
-  vscode.env.clipboard.readText().then((text) => {
-    if (text.startsWith(LINE_MODE_MARKER)) {
-      // Remove the marker
-      text = text.slice(1);
+  const text = await vscode.env.clipboard.readText();
 
-      editor.edit((editBuilder) => {
-        editor.selections.forEach((selection) => {
-          const position = selection.active;
-          const lineNumber =
-            place === "before" ? position.line : position.line + 1;
+  if (text.endsWith("\n")) {
+    editor.edit((editBuilder) => {
+      editor.selections.forEach((selection) => {
+        const position = selection.active;
+        const lineNumber =
+          place === "before" ? position.line : position.line + 1;
 
-          // Insert the text on a new line below the current line
-          const insertPosition = new vscode.Position(lineNumber, 0);
-          editBuilder.insert(insertPosition, text + "\n");
-        });
+        // Insert the text on a new line below the current line
+        const insertPosition = new vscode.Position(lineNumber, 0);
+        editBuilder.insert(insertPosition, text);
+
+        const lines = text.split("\n");
+        // Move the cursor to the new line
+        const newPosition = new vscode.Position(
+          lineNumber,
+          lines[lines.length - 1].length
+        );
+        editor.selection = new vscode.Selection(newPosition, newPosition);
       });
-    } else {
-      // If it's not line mode, perform a regular paste operation
-      if (place === "after" && !isAnyTextSelected(editor)) {
-        vscode.commands.executeCommand("cursorRight");
-      }
-      vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    });
+  } else {
+    // If it's not line mode, perform a regular paste operation
+    if (place === "after" && !isAnyTextSelected(editor)) {
+      vscode.commands.executeCommand("cursorRight");
     }
-  });
+    vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+  }
 }

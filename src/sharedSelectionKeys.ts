@@ -21,14 +21,14 @@ export const sharedSelectionKeys: KeyMap = [
   {
     keys: "p",
     command: async function () {
-      lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
+      return lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
     },
     leaveInMode: defaultMode,
   },
   {
     keys: "P",
     command: async function () {
-      lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
+      return lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
     },
   },
 

@@ -15,11 +15,7 @@ import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
-import {
-  lineModeAwarePaste,
-  lineModeCut,
-  popSelections,
-} from "./utilities/selection";
+import { lineModeAwarePaste, popSelections } from "./utilities/selection";
 
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
@@ -72,22 +68,20 @@ const normalKeyMap: KeyMap = [
   },
   {
     keys: "D",
-    command: async function () {
-      lineModeCut(vscode.window.activeTextEditor!);
-    },
+    command: "editor.actions.clipboardCutAction",
   },
   { keys: "Y", command: "editor.action.clipboardCopyAction" },
   {
     keys: "p",
     command: async function () {
-      lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
+      return lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
     },
     leaveInMode: defaultMode,
   },
   {
     keys: "P",
     command: async function () {
-      lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
+      return lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
     },
   },
   {

@@ -58,6 +58,14 @@ export const sharedSelectionKeys: KeyMap = [
     leaveInMode: defaultMode,
   },
   {
+    keys: "<tab>",
+    command: "editor.action.indentLines",
+  },
+  {
+    keys: "<s-tab>",
+    command: "editor.action.outdentLines",
+  },
+  {
     keys: "<backspace>",
     command: async () => {
       const editor = vscode.window.activeTextEditor;

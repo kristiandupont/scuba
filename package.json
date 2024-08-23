@@ -326,6 +326,22 @@
         },
         "when": "editorTextFocus && scuba.currentMode != 'insert'",
         "key": "backspace"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<tab>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "tab"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
+          "key": "<s-tab>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+tab"
       }
     ]
   },

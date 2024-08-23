@@ -31,6 +31,12 @@ export function lineModeCopy(editor: vscode.TextEditor): void {
   const document = editor.document;
   const selections = editor.selections;
 
+  if (selections.length === 0 || selections.length > 1) {
+    // If there are no selections or multiple selections, perform a regular copy operation
+    vscode.commands.executeCommand("editor.action.clipboardCopyAction");
+    return;
+  }
+
   let textToCopy = "";
 
   selections.forEach((selection, index) => {
@@ -55,26 +61,21 @@ export function lineModeCopy(editor: vscode.TextEditor): void {
 }
 
 export function lineModeCut(editor: vscode.TextEditor): void {
-  const document = editor.document;
   lineModeCopy(editor);
 
-  editor.edit((editBuilder) => {
-    editor.selections.forEach((selection) => {
-      const start = selection.start.line;
-      const end = selection.end.line + (selection.end.character > 0 ? 1 : 0);
-
-      for (let i = start; i < end; i++) {
-        const line = document.lineAt(start);
-        editBuilder.delete(line.rangeIncludingLineBreak);
-      }
-    });
-  });
+  vscode.commands.executeCommand("deleteRight");
 }
 
 export function lineModeAwarePaste(
   editor: vscode.TextEditor,
   place: "before" | "after"
 ): void {
+  if (editor.selections.length > 1) {
+    // If there are multiple selections, perform a regular paste operation
+    vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    return;
+  }
+
   vscode.env.clipboard.readText().then((text) => {
     if (text.startsWith(LINE_MODE_MARKER)) {
       // Remove the marker

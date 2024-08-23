@@ -30,9 +30,7 @@ export const lineSelectMode: Mode = {
     const selections = editor.selections.map((selection) => {
       const start = selection.start.with({ character: 0 });
       let end = selection.end;
-      if (end.character !== 0) {
-        end = end.with({ line: end.line + 1, character: 0 });
-      }
+      end = end.with({ line: end.line + 1, character: 0 });
       return new vscode.Selection(start, end);
     });
 

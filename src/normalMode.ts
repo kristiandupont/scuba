@@ -90,6 +90,14 @@ const normalKeyMap: KeyMap = [
       lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
     },
   },
+  {
+    keys: "<tab>",
+    command: "editor.action.indentLines",
+  },
+  {
+    keys: "<s-tab>",
+    command: "editor.action.outdentLines",
+  },
 
   { keys: "u", command: "undo" },
   { keys: "U", command: "redo" },

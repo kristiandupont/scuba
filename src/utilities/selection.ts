@@ -70,7 +70,7 @@ export function lineModeAwarePaste(
   editor: vscode.TextEditor,
   place: "before" | "after"
 ): void {
-  if (editor.selections.length > 1) {
+  if (isAnyTextSelected(editor)) {
     // If there are multiple selections, perform a regular paste operation
     vscode.commands.executeCommand("editor.action.clipboardPasteAction");
     return;

@@ -32,3 +32,35 @@ export const sneakMode: Mode = {
     }
   },
 };
+
+export const sneakBackwardsMode: Mode = {
+  isInsertMode: false,
+  name: "sneak-backwards",
+  statusItemText: "Sneak Backwards",
+  handleSubCommandChain: async function (
+    keys: string,
+    textEditor: vscode.TextEditor
+  ) {
+    if (keys.length === 1) {
+      // Wait for second key.
+    } else if (keys.length === 2) {
+      const word = keys.toLowerCase();
+      // Find the previous occurrence of the word from each cursor:
+      const searchText = textEditor.document.getText().toLowerCase();
+      const newSelections = textEditor.selections.map((selection) => {
+        const previousOccurrence = searchText.lastIndexOf(
+          word,
+          textEditor.document.offsetAt(selection.active) - 1
+        );
+        if (previousOccurrence === -1) {
+          return selection;
+        }
+        const position = textEditor.document.positionAt(previousOccurrence);
+        return new vscode.Selection(position, position);
+      });
+      textEditor.selections = newSelections;
+
+      changeMode({ mode: defaultMode });
+    }
+  },
+};

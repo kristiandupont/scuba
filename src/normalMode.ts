@@ -172,7 +172,8 @@ const normalKeyMap: KeyMap = [
   { keys: ":", leaveInMode: "go-to-line" },
   { keys: "f", leaveInMode: "find-char/inclusive" },
   { keys: "t", leaveInMode: "find-char/exclusive" },
-  { keys: "  ", leaveInMode: sneakMode.name },
+  { keys: "  ", leaveInMode: "sneak" },
+  { keys: " b", leaveInMode: "sneak-backwards" },
 ];
 
 export const normalMode: Mode = {

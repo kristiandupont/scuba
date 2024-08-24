@@ -6,7 +6,7 @@ import { normalMode } from "./normalMode";
 import { replaceCharMode } from "./replaceCharMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { surroundMode } from "./surroundMode";
-import { sneakMode } from "./sneakMode";
+import { sneakBackwardsMode, sneakMode } from "./sneakMode";
 import {
   changeObjectMode as changeObjectMode,
   deleteObjectMode,
@@ -194,6 +194,7 @@ const modes: Mode[] = [
   smartSelectMode,
   surroundMode,
   sneakMode,
+  sneakBackwardsMode,
   findCharMode,
   tillCharMode,
   goToLineMode,

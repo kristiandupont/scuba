@@ -162,7 +162,7 @@ export const changeObjectMode: Mode = {
   isInsertMode: false,
   name: "change",
   statusItemText: "Change",
-  color: new vscode.ThemeColor("editor.foreground"),
+  color: "pink",
 
   handleSubCommandChain: async function (
     keys: string,
@@ -195,7 +195,7 @@ export const deleteObjectMode: Mode = {
   isInsertMode: false,
   name: "delete",
   statusItemText: "Delete",
-  color: new vscode.ThemeColor("editor.foreground"),
+  color: "pink",
 
   handleSubCommandChain: async function (
     keys: string,
@@ -222,7 +222,7 @@ export const yankObjectMode: Mode = {
   isInsertMode: false,
   name: "yank",
   statusItemText: "Yank",
-  color: new vscode.ThemeColor("editor.foreground"),
+  color: "pink",
 
   handleSubCommandChain: async function (
     keys: string,

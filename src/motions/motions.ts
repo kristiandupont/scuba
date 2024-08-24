@@ -30,28 +30,25 @@ const makeRegexMotion =
       return [];
     }
 
+    const start = new vscode.Position(
+      cursorPosition.line,
+      matchTouchingCursor.index!
+    );
+    const end = new vscode.Position(
+      cursorPosition.line,
+      matchTouchingCursor.index! + matchTouchingCursor[0].length
+    );
+
     let anchor = s.anchor;
     let active = s.active;
 
     if (mode === "forward") {
-      active = new vscode.Position(
-        cursorPosition.line,
-        matchTouchingCursor.index! + matchTouchingCursor[0].length
-      );
+      active = end;
     } else if (mode === "backward") {
-      active = new vscode.Position(
-        cursorPosition.line,
-        matchTouchingCursor.index!
-      );
+      active = start;
     } else if (mode === "inside") {
-      anchor = new vscode.Position(
-        cursorPosition.line,
-        matchTouchingCursor.index!
-      );
-      active = new vscode.Position(
-        cursorPosition.line,
-        matchTouchingCursor.index! + matchTouchingCursor[0].length
-      );
+      anchor = start;
+      active = end;
     } else {
       // Mode is 'around'
       anchor = new vscode.Position(
@@ -83,7 +80,10 @@ const makeExtremityMotion =
 
 type Pair = [left: string, right: string];
 
-function makePairedMotion([left, right]: Pair, mode: "inside" | "around") {
+function makePairedMotion(
+  [left, right]: Pair,
+  mode: "inside" | "around" | "forward" | "backward"
+) {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
     const cursorPosition = s.active;
     let start: vscode.Position | null = null;
@@ -170,7 +170,18 @@ function makePairedMotion([left, right]: Pair, mode: "inside" | "around") {
     }
 
     if (start && end) {
-      return [new vscode.Selection(start, end)];
+      let anchor = s.anchor;
+      let active = s.active;
+
+      if (mode === "forward") {
+        active = end;
+      } else if (mode === "backward") {
+        active = start;
+      } else {
+        anchor = start;
+        active = end;
+      }
+      return [new vscode.Selection(anchor, active)];
     }
 
     return [];
@@ -288,7 +299,7 @@ function makeNarrowestPairMotion(pairs: Pair[], mode: "inside" | "around") {
 }
 
 const makeElementMotion =
-  (mode: "inside" | "around") =>
+  (mode: "inside" | "around" | "forward" | "backward") =>
   (s: vscode.Selection, doc: vscode.TextDocument): vscode.Selection[] => {
     let node = getNodeFromSelection(s, doc);
     while (node.parent && !isElementNode(node)) {
@@ -307,9 +318,28 @@ const makeElementMotion =
       return [];
     }
 
-    const start = node.startPosition;
-    const end = node.endPosition;
-    return [new vscode.Selection(start.row, start.column, end.row, end.column)];
+    // const start = node.startPosition;
+    // const end = node.endPosition;
+    const start = new vscode.Position(
+      node.startPosition.row,
+      node.startPosition.column
+    );
+    const end = new vscode.Position(
+      node.endPosition.row,
+      node.endPosition.column
+    );
+    let anchor = s.anchor;
+    let active = s.active;
+
+    if (mode === "forward") {
+      active = end;
+    } else if (mode === "backward") {
+      active = start;
+    } else {
+      anchor = start;
+      active = end;
+    }
+    return [new vscode.Selection(anchor, active)];
   };
 
 function makePropertyOrParameterMotion(mode: "inside" | "around") {
@@ -471,10 +501,13 @@ export const motions: Record<string, Motion> = {
   $: makeExtremityMotion("end"),
   "§": makeExtremityMotion("start"),
 
+  '"': makePairedMotion(['"', '"'], "forward"),
   'i"': makePairedMotion(['"', '"'], "inside"),
   'a"': makePairedMotion(['"', '"'], "around"),
+  "'": makePairedMotion(["'", "'"], "forward"),
   "i'": makePairedMotion(["'", "'"], "inside"),
   "a'": makePairedMotion(["'", "'"], "around"),
+  t: makePairedMotion(["`", "`"], "forward"),
   it: makePairedMotion(["`", "`"], "inside"),
   at: makePairedMotion(["`", "`"], "around"),
   iq: makeNarrowestPairMotion(
@@ -493,12 +526,20 @@ export const motions: Record<string, Motion> = {
     ],
     "around"
   ),
+  "(": makePairedMotion(["(", ")"], "backward"),
+  ")": makePairedMotion(["(", ")"], "forward"),
   "i(": makePairedMotion(["(", ")"], "inside"),
   "a(": makePairedMotion(["(", ")"], "around"),
+  "[": makePairedMotion(["[", "]"], "backward"),
+  "]": makePairedMotion(["[", "]"], "forward"),
   "i[": makePairedMotion(["[", "]"], "inside"),
   "a[": makePairedMotion(["[", "]"], "around"),
+  "{": makePairedMotion(["{", "}"], "backward"),
+  "}": makePairedMotion(["{", "}"], "forward"),
   "i{": makePairedMotion(["{", "}"], "inside"),
   "a{": makePairedMotion(["{", "}"], "around"),
+  "<": makePairedMotion(["<", ">"], "backward"),
+  ">": makePairedMotion(["<", ">"], "forward"),
   "i<": makePairedMotion(["<", ">"], "inside"),
   "a<": makePairedMotion(["<", ">"], "around"),
   ib: makeNarrowestPairMotion(
@@ -519,6 +560,7 @@ export const motions: Record<string, Motion> = {
     ],
     "around"
   ),
+  e: makeElementMotion("forward"),
   ie: makeElementMotion("inside"),
   ae: makeElementMotion("around"),
   ii: makeIndentationScopeMotion("inside"),

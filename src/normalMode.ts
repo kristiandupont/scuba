@@ -61,9 +61,7 @@ const normalKeyMap: KeyMap = [
       moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
       await vscode.commands.executeCommand("cursorHome");
       await vscode.commands.executeCommand("deleteAllRight");
-      await vscode.commands.executeCommand("scuba.changeMode", {
-        mode: insertMode.name,
-      });
+      return insertMode.name;
     },
   },
   { keys: "D", command: "editor.action.clipboardCutAction" },
@@ -120,10 +118,8 @@ const normalKeyMap: KeyMap = [
       await vscode.commands.executeCommand("cursorWordStartLeft");
     },
   },
-  {
-    keys: "x",
-    command: "deleteRight",
-  },
+  { keys: "x", command: "deleteRight" },
+  { keys: "s", command: "deleteRight", leaveInMode: insertMode.name },
 
   // Goto "mode" (g)
   { keys: "gd", command: "editor.action.goToDeclaration" },

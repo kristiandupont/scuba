@@ -15,34 +15,38 @@ import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
 function applyMotion(
   motion: Motion,
   editor: vscode.TextEditor
-): vscode.Range[] {
+): vscode.Selection[] {
   const document = editor.document;
-  const ranges: vscode.Range[] = [];
+  const selections: vscode.Selection[] = [];
 
   for (const selection of editor.selections) {
     const results = motion(selection, document);
-    ranges.push(...results);
+    selections.push(...results);
   }
 
-  return ranges;
+  return selections;
 }
 
 async function selectFromMotion(
   motion: Motion,
   editor: vscode.TextEditor
 ): Promise<void> {
-  const ranges = applyMotion(motion, editor);
-  editor.selections = ranges.map(
-    (range) => new vscode.Selection(range.start, range.end)
-  );
+  const selections = applyMotion(motion, editor);
+  if (selections.length === 0) {
+    return;
+  }
+  editor.selections = selections;
 }
 
 async function yank(motion: Motion, editor: vscode.TextEditor): Promise<void> {
-  const ranges = applyMotion(motion, editor);
+  const selections = applyMotion(motion, editor);
+  if (selections.length === 0) {
+    return;
+  }
   const textsToCopy: string[] = [];
 
-  ranges.forEach((range) => {
-    const text = editor.document.getText(range);
+  selections.forEach((selection) => {
+    const text = editor.document.getText(selection);
     textsToCopy.push(text);
   });
 
@@ -54,9 +58,12 @@ async function deleteFromMotion(
   motion: Motion,
   editor: vscode.TextEditor
 ): Promise<void> {
-  const ranges = applyMotion(motion, editor);
-  const edits: vscode.TextEdit[] = ranges.map((range) =>
-    vscode.TextEdit.delete(range)
+  const selections = applyMotion(motion, editor);
+  if (selections.length === 0) {
+    return;
+  }
+  const edits: vscode.TextEdit[] = selections.map((selection) =>
+    vscode.TextEdit.delete(selection)
   );
 
   await editor.edit((editBuilder) => {

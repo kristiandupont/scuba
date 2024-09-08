@@ -10,7 +10,6 @@ import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
 import { makeSearchMotion } from "./motions/makeSearchMotion";
 import { isAnyTextSelected, pushSelections } from "./utilities/selection";
-import { moveCursorsRightUnlessTheyAreAtEOL } from "./utilities/movement";
 
 function applyMotion(
   motion: Motion,
@@ -135,7 +134,7 @@ export const selectMode: Mode = {
     pushSelections(editor);
 
     if (!isAnyTextSelected(editor)) {
-      moveCursorsRightUnlessTheyAreAtEOL(1, editor);
+      vscode.commands.executeCommand("cursorRightSelect");
     }
   },
 

@@ -15,6 +15,7 @@ import {
 } from "./verb-object-modes";
 import { findCharMode, tillCharMode } from "./char-search-modes";
 import { goToLineMode } from "./goToLineMode";
+import { activate as activateTreeSitter } from "./utilities/parse-tree";
 
 export const defaultMode = "normal";
 
@@ -271,6 +272,8 @@ async function handleNonCharacterKey({ key }: { key: string }) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  activateTreeSitter(context);
+
   context.subscriptions.push(
     vscode.commands.registerCommand("scuba.changeMode", changeMode)
   );

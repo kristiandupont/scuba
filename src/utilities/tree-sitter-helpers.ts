@@ -1,21 +1,20 @@
 import * as vscode from "vscode";
-const parseTreeExtension = vscode.extensions.getExtension("pokey.parse-tree");
-
 import type { SyntaxNode } from "web-tree-sitter";
+import { getTreeForUri } from "./parse-tree";
 
-let getTreeForUri: any;
+// let getTreeForUri: any;
 
 export function getNodeFromSelection(
   selection: vscode.Selection,
   document: vscode.TextDocument
 ) {
-  if (!getTreeForUri) {
-    // Get the parse-tree API
-    if (!parseTreeExtension) {
-      throw new Error("Depends on pokey.parse-tree extension");
-    }
-    getTreeForUri = parseTreeExtension.exports.getTreeForUri;
-  }
+  // if (!getTreeForUri) {
+  //   // Get the parse-tree API
+  //   if (!parseTreeExtension) {
+  //     throw new Error("Depends on pokey.parse-tree extension");
+  //   }
+  //   getTreeForUri = parseTreeExtension.exports.getTreeForUri;
+  // }
 
   const range = new vscode.Range(selection.start, selection.end);
 

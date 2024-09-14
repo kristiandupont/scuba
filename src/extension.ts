@@ -50,7 +50,7 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
     throw new Error(`Unknown mode: ${currentMode}`);
   }
 
-  if (previousMode && !previousMode.isInsertMode && previousMode.onExit) {
+  if (previousMode && previousMode.onExit) {
     previousMode.onExit();
   }
 

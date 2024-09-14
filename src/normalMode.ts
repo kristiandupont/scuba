@@ -16,6 +16,7 @@ import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
 import { lineModeAwarePaste, popSelections } from "./utilities/selection";
+import { getIsCursor } from "./utilities/isCursor";
 
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
@@ -181,7 +182,14 @@ export const normalMode: Mode = {
   name: "normal",
   statusItemText: "Normal",
   onEnter: async function () {
-    vscode.commands.executeCommand("cancelSelection");
+    if (getIsCursor()) {
+      await vscode.commands.executeCommand("editor.action.enableCppGlobally");
+    }
+  },
+  onExit: async function () {
+    if (getIsCursor()) {
+      await vscode.commands.executeCommand("editor.cpp.disableenabled");
+    }
   },
   handleSubCommandChain: makeSubChainHandler(normalKeyMap),
 };

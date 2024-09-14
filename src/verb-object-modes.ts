@@ -10,6 +10,7 @@ import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
 import { makeSearchMotion } from "./motions/makeSearchMotion";
 import { isAnyTextSelected, pushSelections } from "./utilities/selection";
+import { moveCursorsToStartOfLine } from "./utilities/movement";
 
 function applyMotion(
   motion: Motion,
@@ -167,6 +168,13 @@ export const changeObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
+    if (keys === "c") {
+      moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
+      await vscode.commands.executeCommand("cursorHome");
+      await vscode.commands.executeCommand("deleteAllRight");
+      changeMode({ mode: "insert" });
+      return;
+    }
     const motion = findMotion(keys);
 
     if (motion) {
@@ -200,6 +208,12 @@ export const deleteObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
+    if (keys === "d") {
+      await vscode.commands.executeCommand("editor.action.clipboardCutAction");
+      changeMode({ mode: defaultMode });
+      return;
+    }
+
     const motion = findMotion(keys);
 
     if (motion) {
@@ -227,6 +241,12 @@ export const yankObjectMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
+    if (keys === "y") {
+      await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
+      changeMode({ mode: defaultMode });
+      return;
+    }
+
     const motion = findMotion(keys);
 
     if (motion) {

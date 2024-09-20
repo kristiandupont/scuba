@@ -15,7 +15,11 @@ import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
-import { lineModeAwarePaste, popSelections } from "./utilities/selection";
+import {
+  lineModeAwarePaste,
+  popSelections,
+  undoPopSelections,
+} from "./utilities/selection";
 import { getIsCursor } from "./utilities/isCursor";
 
 const normalKeyMap: KeyMap = [
@@ -157,6 +161,16 @@ const normalKeyMap: KeyMap = [
         return;
       }
       popSelections(editor);
+    },
+  },
+  {
+    keys: "<s-backspace>",
+    command: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      undoPopSelections(editor);
     },
   },
 

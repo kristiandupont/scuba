@@ -7,19 +7,42 @@ export function isAnyTextSelected(textEditor: vscode.TextEditor) {
 }
 
 let previousSelectionsStack: (readonly vscode.Selection[])[] = [];
+let previousSelectionsStackIndex = 0;
 
 export function pushSelections(textEditor: vscode.TextEditor) {
+  // If we are not at the top of the stack, truncate the stack
+  if (previousSelectionsStackIndex < previousSelectionsStack.length) {
+    previousSelectionsStack = previousSelectionsStack.slice(
+      0,
+      previousSelectionsStackIndex
+    );
+  }
+
   previousSelectionsStack.push(textEditor.selections);
+  previousSelectionsStackIndex++;
 
   if (previousSelectionsStack.length > 32) {
     previousSelectionsStack.shift();
+    previousSelectionsStackIndex--;
   }
 }
 
 export function popSelections(textEditor: vscode.TextEditor) {
-  const previousSelections = previousSelectionsStack.pop();
-  if (previousSelections) {
+  if (previousSelectionsStackIndex > 0) {
+    previousSelectionsStackIndex--;
+    const previousSelections =
+      previousSelectionsStack[previousSelectionsStackIndex];
     textEditor.selections = previousSelections;
+    textEditor.revealRange(textEditor.selection);
+  }
+}
+
+export function undoPopSelections(textEditor: vscode.TextEditor) {
+  if (previousSelectionsStackIndex < previousSelectionsStack.length - 1) {
+    previousSelectionsStackIndex++;
+    const nextSelections =
+      previousSelectionsStack[previousSelectionsStackIndex];
+    textEditor.selections = nextSelections;
     textEditor.revealRange(textEditor.selection);
   }
 }

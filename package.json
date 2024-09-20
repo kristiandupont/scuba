@@ -330,6 +330,14 @@
       {
         "command": "scuba.handleNonCharacterKey",
         "args": {
+          "key": "<s-backspace>"
+        },
+        "when": "editorTextFocus && scuba.currentMode != 'insert'",
+        "key": "shift+backspace"
+      },
+      {
+        "command": "scuba.handleNonCharacterKey",
+        "args": {
           "key": "<tab>"
         },
         "when": "editorTextFocus && scuba.currentMode != 'insert'",

@@ -4,6 +4,7 @@ import {
   isAnyTextSelected,
   lineModeAwarePaste,
   popSelections,
+  undoPopSelections,
 } from "./utilities/selection";
 
 export const sharedSelectionKeys: KeyMap = [
@@ -120,6 +121,16 @@ export const sharedSelectionKeys: KeyMap = [
         return;
       }
       popSelections(editor);
+    },
+  },
+  {
+    keys: "<s-backspace>",
+    command: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      undoPopSelections(editor);
     },
   },
 ];

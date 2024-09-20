@@ -17,12 +17,9 @@ function applyMotion(
   editor: vscode.TextEditor
 ): vscode.Selection[] {
   const document = editor.document;
-  const selections: vscode.Selection[] = [];
-
-  for (const selection of editor.selections) {
-    const results = motion(selection, document);
-    selections.push(...results);
-  }
+  const selections: vscode.Selection[] = editor.selections
+    .map((selection) => motion(selection, document))
+    .flat();
 
   return selections;
 }
@@ -43,15 +40,12 @@ async function yank(motion: Motion, editor: vscode.TextEditor): Promise<void> {
   if (selections.length === 0) {
     return;
   }
-  const textsToCopy: string[] = [];
+  const textsToCopy = selections.map((selection) =>
+    editor.document.getText(selection)
+  );
 
-  selections.forEach((selection) => {
-    const text = editor.document.getText(selection);
-    textsToCopy.push(text);
-  });
-
-  const textToCopy = textsToCopy.join("\n");
-  await vscode.env.clipboard.writeText(textToCopy);
+  const combined = textsToCopy.join("\n");
+  await vscode.env.clipboard.writeText(combined);
 }
 
 async function deleteFromMotion(
@@ -62,7 +56,7 @@ async function deleteFromMotion(
   if (selections.length === 0) {
     return;
   }
-  const edits: vscode.TextEdit[] = selections.map((selection) =>
+  const edits = selections.map((selection) =>
     vscode.TextEdit.delete(selection)
   );
 
@@ -133,10 +127,6 @@ export const selectMode: Mode = {
     }
 
     pushSelections(editor);
-
-    if (!isAnyTextSelected(editor)) {
-      vscode.commands.executeCommand("cursorRightSelect");
-    }
   },
 
   handleSubCommandChain: async function (

@@ -30,6 +30,7 @@ export const sharedSelectionKeys: KeyMap = [
     command: async function () {
       return lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
     },
+    leaveInMode: defaultMode,
   },
   { keys: "<a-up>", command: "editor.action.moveLinesUpAction" },
   { keys: "<a-down>", command: "editor.action.moveLinesDownAction" },
@@ -39,7 +40,11 @@ export const sharedSelectionKeys: KeyMap = [
   { keys: "S", leaveInMode: "smart-select" },
   { keys: "s", leaveInMode: "surround" },
 
-  { keys: "gc", command: "editor.action.commentLine" },
+  {
+    keys: "gc",
+    command: "editor.action.commentLine",
+    leaveInMode: defaultMode,
+  },
   {
     keys: "zz",
     command: async function () {

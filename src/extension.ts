@@ -298,7 +298,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
         // If we just positioned the cursor, leave in normal mode. If we selected
-        // text, enter line select mode.
+        // text, enter insert mode.
         if (e.selections.some((s) => s.isEmpty)) {
           changeMode({ mode: normalMode.name });
         } else {

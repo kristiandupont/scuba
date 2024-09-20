@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
 import { defaultMode, KeyMap } from "./extension";
-import { lineModeAwarePaste, popSelections } from "./utilities/selection";
+import {
+  isAnyTextSelected,
+  lineModeAwarePaste,
+  popSelections,
+} from "./utilities/selection";
 
 export const sharedSelectionKeys: KeyMap = [
   {
@@ -56,13 +60,49 @@ export const sharedSelectionKeys: KeyMap = [
   },
   {
     keys: "u",
-    command: "editor.action.transformToLowercase",
-    leaveInMode: defaultMode,
+    command: async function () {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      if (isAnyTextSelected(editor)) {
+        await vscode.commands.executeCommand(
+          "editor.action.transformToLowercase"
+        );
+      } else {
+        // Make the character under the cursor lowercase:
+        await editor.edit((editBuilder) => {
+          const position = editor.selection.active;
+          const range = new vscode.Range(position, position.translate(0, 1));
+          const text = editor.document.getText(range);
+          editBuilder.replace(range, text.toLowerCase());
+        });
+      }
+      return defaultMode;
+    },
   },
   {
     keys: "U",
-    command: "editor.action.transformToUppercase",
-    leaveInMode: defaultMode,
+    command: async function () {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      if (isAnyTextSelected(editor)) {
+        await vscode.commands.executeCommand(
+          "editor.action.transformToUppercase"
+        );
+      } else {
+        // Make the character under the cursor uppercase:
+        await editor.edit((editBuilder) => {
+          const position = editor.selection.active;
+          const range = new vscode.Range(position, position.translate(0, 1));
+          const text = editor.document.getText(range);
+          editBuilder.replace(range, text.toUpperCase());
+        });
+      }
+      return defaultMode;
+    },
   },
   {
     keys: "<tab>",

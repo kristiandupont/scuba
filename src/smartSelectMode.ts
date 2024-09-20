@@ -1,7 +1,11 @@
 import * as vscode from "vscode";
 import { makeSubChainHandler, Mode } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
-import { isAnyTextSelected, pushSelections } from "./utilities/selection";
+import {
+  isAnyTextSelected,
+  popSelections,
+  pushSelections,
+} from "./utilities/selection";
 import {
   moveSiblingNode,
   selectCurrentNode,
@@ -34,8 +38,7 @@ export const smartSelectMode: Mode = {
     {
       keys: "<right>",
       command: async () => {
-        pushSelections(vscode.window.activeTextEditor!);
-        selectFirstChildNode();
+        popSelections(vscode.window.activeTextEditor!);
       },
     },
     { keys: "<up>", command: "scuba.selectPrevSibling" },

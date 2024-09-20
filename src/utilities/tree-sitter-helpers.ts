@@ -76,6 +76,10 @@ export function isCommentNode(node: any): boolean {
 }
 
 export function isPropertyLikeNode(node: any): boolean {
+  if (["jsx_attribute", "import_specifier"].includes(node.type)) {
+    return true;
+  }
+
   if (!node.parent) {
     return false;
   }
@@ -90,5 +94,7 @@ export function isPropertyLikeNode(node: any): boolean {
     "type_literal",
     "array",
     "array_pattern",
+    "named_imports",
+    "object_type",
   ].includes(parentType);
 }

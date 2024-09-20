@@ -136,7 +136,10 @@ function makePairedMotion(
     for (let line = cursorPosition.line; line < doc.lineCount; line++) {
       const lineText = doc.lineAt(line).text;
       for (
-        let char = line === cursorPosition.line ? cursorPosition.character : 0;
+        let char =
+          line === cursorPosition.line
+            ? Math.max(0, cursorPosition.character - 1)
+            : 0;
         char < lineText.length;
         char++
       ) {
@@ -245,7 +248,9 @@ function makeNarrowestPairMotion(pairs: Pair[], mode: "inside" | "around") {
         const lineText = doc.lineAt(line).text;
         for (
           let char =
-            line === cursorPosition.line ? cursorPosition.character : 0;
+            line === cursorPosition.line
+              ? Math.max(0, cursorPosition.character - 1)
+              : 0;
           char < lineText.length;
           char++
         ) {
@@ -364,7 +369,7 @@ function makePropertyOrParameterMotion(mode: "inside" | "around") {
     // include the previous comma, if there is one)
     if (mode === "around") {
       const nextSibling = node.nextSibling;
-      if (nextSibling && nextSibling.text === ",") {
+      if (nextSibling && [",", ";"].includes(nextSibling.text)) {
         end = nextSibling.endPosition;
       } else {
         const previousSibling = node.previousSibling;

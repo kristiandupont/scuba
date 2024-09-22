@@ -495,7 +495,7 @@ const makeIndentationScopeMotion =
   };
 
 export const motions: Record<string, Motion> = {
-  w: makeRegexMotion(/\b\w+\b\s*/g, "forward"),
+  w: makeRegexMotion(/\w+\b\s*/g, "forward"),
   b: makeRegexMotion(/\s*\b\w+\b/g, "backward"),
   iw: makeRegexMotion(/\b\w+\b/g, "inside"),
 

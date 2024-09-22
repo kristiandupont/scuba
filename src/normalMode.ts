@@ -13,7 +13,6 @@ import {
 import { replaceCharMode } from "./replaceCharMode";
 import { lineSelectMode } from "./lineSelectMode";
 import { smartSelectMode } from "./smartSelectMode";
-import { sneakMode } from "./sneakMode";
 import { insertMode } from "./insertMode";
 import {
   lineModeAwarePaste,
@@ -21,6 +20,7 @@ import {
   undoPopSelections,
 } from "./utilities/selection";
 import { getIsCursor } from "./utilities/isCursor";
+import { incrementNumberUnderCursor } from "./utilities/edits";
 
 const normalKeyMap: KeyMap = [
   { keys: "<up>", command: "cursorUp" },
@@ -110,6 +110,19 @@ const normalKeyMap: KeyMap = [
   { keys: "#", command: "findWordAtCursor.previous" },
   { keys: "@", command: "editor.action.addSelectionToNextFindMatch" },
   { keys: "%", command: "editor.action.jumpToBracket" },
+
+  {
+    keys: "-",
+    command: async function () {
+      incrementNumberUnderCursor(vscode.window.activeTextEditor!, -1);
+    },
+  },
+  {
+    keys: "+",
+    command: async function () {
+      incrementNumberUnderCursor(vscode.window.activeTextEditor!, 1);
+    },
+  },
 
   { keys: "J", command: "editor.action.joinLines" },
   { keys: " m", command: "textmarker.toggleHighlight" },

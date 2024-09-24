@@ -3,7 +3,7 @@ import { makeElementMotion } from "./makeElementMotion";
 import { makeExtremityMotion } from "./makeExtremityMotion";
 import { makeIndentationScopeMotion } from "./makeIndentationScopeMotion";
 import { makePropertyOrParameterMotion } from "./makePropertyOrParameterMotion";
-import { makeRegexMotion } from "./makeRefexMotion";
+import { makeRegexMotion } from "./makeRegexMotion";
 import { makeWordPartMotion } from "./makeWordPartMotion";
 import { makeNarrowestPairMotion, makePairedMotion } from "./pair-motions";
 import { commentMotion } from "./commentMotion";

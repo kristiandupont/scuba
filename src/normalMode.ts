@@ -5,16 +5,6 @@ import {
   moveCursorsToStartOfLine,
 } from "./utilities/movement";
 import {
-  changeObjectMode,
-  deleteObjectMode,
-  selectMode,
-  yankObjectMode,
-} from "./verb-object-modes";
-import { replaceCharMode } from "./replaceCharMode";
-import { lineSelectMode } from "./lineSelectMode";
-import { smartSelectMode } from "./smartSelectMode";
-import { insertMode } from "./insertMode";
-import {
   lineModeAwarePaste,
   popSelections,
   undoPopSelections,
@@ -41,22 +31,22 @@ const normalKeyMap: KeyMap = [
   { keys: "$", command: "cursorLineEnd" },
 
   { keys: "i", leaveInMode: "insert" },
-  { keys: "I", command: "cursorHome", leaveInMode: insertMode.name },
+  { keys: "I", command: "cursorHome", leaveInMode: "insert" },
   {
     keys: "a",
     command: moveCursorsRightUnlessTheyAreAtEOL,
-    leaveInMode: insertMode.name,
+    leaveInMode: "insert",
   },
-  { keys: "A", command: "cursorEnd", leaveInMode: insertMode.name },
+  { keys: "A", command: "cursorEnd", leaveInMode: "insert" },
   {
     keys: "o",
     command: "editor.action.insertLineAfter",
-    leaveInMode: insertMode.name,
+    leaveInMode: "insert",
   },
   {
     keys: "O",
     command: "editor.action.insertLineBefore",
-    leaveInMode: insertMode.name,
+    leaveInMode: "insert",
   },
   {
     keys: "C",
@@ -66,7 +56,7 @@ const normalKeyMap: KeyMap = [
       moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
       await vscode.commands.executeCommand("cursorHome");
       await vscode.commands.executeCommand("deleteAllRight");
-      return insertMode.name;
+      return "insert";
     },
   },
   { keys: "D", command: "editor.action.clipboardCutAction" },
@@ -137,7 +127,7 @@ const normalKeyMap: KeyMap = [
     },
   },
   { keys: "x", command: "deleteRight" },
-  { keys: "s", command: "deleteRight", leaveInMode: insertMode.name },
+  { keys: "s", command: "deleteRight", leaveInMode: "insert" },
 
   // Goto "mode" (g)
   { keys: "gd", command: "editor.action.goToDeclaration" },
@@ -187,15 +177,15 @@ const normalKeyMap: KeyMap = [
     },
   },
 
-  { keys: "v", leaveInMode: selectMode.name },
-  { keys: "V", leaveInMode: lineSelectMode.name },
-  { keys: "S", leaveInMode: smartSelectMode.name },
+  { keys: "v", leaveInMode: "select" },
+  { keys: "V", leaveInMode: "line-select" },
+  { keys: "S", leaveInMode: "smart-select" },
 
-  { keys: "c", leaveInMode: changeObjectMode.name },
-  { keys: "y", leaveInMode: yankObjectMode.name },
-  { keys: "d", leaveInMode: deleteObjectMode.name },
+  { keys: "c", leaveInMode: "change" },
+  { keys: "y", leaveInMode: "yank" },
+  { keys: "d", leaveInMode: "delete" },
 
-  { keys: "r", leaveInMode: replaceCharMode.name },
+  { keys: "r", leaveInMode: "replace-char" },
 
   { keys: ":", leaveInMode: "go-to-line" },
   { keys: "f", leaveInMode: "find-char/inclusive" },

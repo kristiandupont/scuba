@@ -6,7 +6,7 @@ import { normalMode } from "./normalMode";
 import { replaceCharMode } from "./replaceCharMode";
 import { smartSelectMode } from "./smartSelectMode";
 import { surroundMode } from "./surroundMode";
-import { sneakBackwardsMode, sneakMode } from "./sneakMode";
+import { sneakBackwardsMode, sneakMode } from "./sneak-modes";
 import {
   changeObjectMode as changeObjectMode,
   deleteObjectMode,

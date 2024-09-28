@@ -10,7 +10,7 @@ export const makeRegexMotion =
     const matchTouchingCursor = matches.find(
       (match) =>
         match.index! <= cursorPosition.character &&
-        match.index! + match[0].length >= cursorPosition.character
+        match.index! + match[0].length > cursorPosition.character
     );
 
     if (!matchTouchingCursor) {

@@ -13,84 +13,89 @@ export function makePairedMotion(
     let nestingLevel = 0;
     const isSameChar = left === right;
 
-    // Search backwards for opening character
-    for (let line = cursorPosition.line; line >= 0; line--) {
-      const lineText = doc.lineAt(line).text;
-      for (
-        let char =
-          line === cursorPosition.line
-            ? cursorPosition.character - 1
-            : lineText.length - 1;
-        char >= 0;
-        char--
-      ) {
-        if (lineText[char] === left) {
-          if (isSameChar) {
-            if (nestingLevel === 0) {
-              start = new vscode.Position(
-                line,
-                char + (mode === "inside" ? 1 : 0)
-              );
-              break;
+    if (
+      doc.getText(
+        new vscode.Range(cursorPosition, cursorPosition.translate(0, 1))
+      ) === left
+    ) {
+      start = cursorPosition;
+    } else {
+      // Search backwards for opening character
+      for (let line = cursorPosition.line; line >= 0; line--) {
+        const lineText = doc.lineAt(line).text;
+        for (
+          let char =
+            line === cursorPosition.line
+              ? Math.max(0, cursorPosition.character - 1)
+              : lineText.length - 1;
+          char >= 0;
+          char--
+        ) {
+          if (lineText[char] === left) {
+            if (isSameChar) {
+              if (nestingLevel === 0) {
+                start = new vscode.Position(line, char);
+                break;
+              }
+              nestingLevel = 1 - nestingLevel; // Toggle between 0 and 1
+            } else {
+              if (nestingLevel === 0) {
+                start = new vscode.Position(line, char);
+                break;
+              }
+              nestingLevel--;
             }
-            nestingLevel = 1 - nestingLevel; // Toggle between 0 and 1
-          } else {
-            if (nestingLevel === 0) {
-              start = new vscode.Position(
-                line,
-                char + (mode === "inside" ? 1 : 0)
-              );
-              break;
-            }
-            nestingLevel--;
+          } else if (!isSameChar && lineText[char] === right) {
+            nestingLevel++;
           }
-        } else if (!isSameChar && lineText[char] === right) {
-          nestingLevel++;
         }
-      }
-      if (start) {
-        break;
+        if (start) {
+          break;
+        }
       }
     }
 
-    nestingLevel = 0;
-    // Search forwards for closing character
-    for (let line = cursorPosition.line; line < doc.lineCount; line++) {
-      const lineText = doc.lineAt(line).text;
-      for (
-        let char =
-          line === cursorPosition.line
-            ? Math.max(0, cursorPosition.character - 1)
-            : 0;
-        char < lineText.length;
-        char++
-      ) {
-        if (lineText[char] === right) {
-          if (isSameChar) {
-            if (nestingLevel === 0) {
-              end = new vscode.Position(
-                line,
-                char + (mode === "around" ? 1 : 0)
-              );
-              break;
+    if (!start) {
+      return [];
+    }
+
+    if (
+      doc.getText(
+        new vscode.Range(cursorPosition, cursorPosition.translate(0, 1))
+      ) === right
+    ) {
+      end = cursorPosition;
+    } else {
+      nestingLevel = 0;
+      // Search forwards from found start for closing character
+      for (let line = start.line; line < doc.lineCount; line++) {
+        const lineText = doc.lineAt(line).text;
+        for (
+          let char = line === start.line ? start.character + 1 : 0;
+          char < lineText.length;
+          char++
+        ) {
+          if (lineText[char] === right) {
+            if (isSameChar) {
+              if (nestingLevel === 0) {
+                end = new vscode.Position(line, char);
+                break;
+              }
+              nestingLevel = 1 - nestingLevel; // Toggle between 0 and 1
+            } else {
+              if (nestingLevel === 0) {
+                end = new vscode.Position(line, char);
+                break;
+              }
+              nestingLevel--;
             }
-            nestingLevel = 1 - nestingLevel; // Toggle between 0 and 1
-          } else {
-            if (nestingLevel === 0) {
-              end = new vscode.Position(
-                line,
-                char + (mode === "around" ? 1 : 0)
-              );
-              break;
-            }
-            nestingLevel--;
+          } else if (!isSameChar && lineText[char] === left) {
+            nestingLevel++;
           }
-        } else if (!isSameChar && lineText[char] === left) {
-          nestingLevel++;
         }
-      }
-      if (end) {
-        break;
+        if (end) {
+          break;
+        }
       }
     }
 
@@ -102,9 +107,13 @@ export function makePairedMotion(
         active = end;
       } else if (mode === "backward") {
         active = start;
-      } else {
-        anchor = start;
+      } else if (mode === "inside") {
+        anchor = new vscode.Position(start.line, start.character + 1);
         active = end;
+      } else {
+        // Mode is 'around'
+        anchor = start;
+        active = new vscode.Position(end.line, end.character + 1);
       }
       return [new vscode.Selection(anchor, active)];
     }

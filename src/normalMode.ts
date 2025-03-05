@@ -141,6 +141,7 @@ const normalKeyMap: KeyMap = [
   },
   { keys: "gr", command: "references-view.findReferences" },
   { keys: "gh", command: "editor.action.showHover" },
+  { keys: "gp", command: "editor.action.triggerParameterHints" },
   { keys: "gc", command: "editor.action.commentLine" },
   { keys: "ge", command: "editor.action.marker.next" },
 
@@ -198,15 +199,5 @@ export const normalMode: Mode = {
   isInsertMode: false,
   name: "normal",
   statusItemText: "Normal",
-  onEnter: async function () {
-    if (getIsCursor()) {
-      await vscode.commands.executeCommand("editor.action.enableCppGlobally");
-    }
-  },
-  onExit: async function () {
-    if (getIsCursor()) {
-      await vscode.commands.executeCommand("editor.cpp.disableenabled");
-    }
-  },
   handleSubCommandChain: makeSubChainHandler(normalKeyMap),
 };

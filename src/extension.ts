@@ -297,13 +297,8 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
-        // If we just positioned the cursor, leave in normal mode. If we selected
-        // text, enter insert mode.
-        if (e.selections.some((s) => s.isEmpty)) {
-          changeMode({ mode: normalMode.name });
-        } else {
-          changeMode({ mode: insertMode.name });
-        }
+        // When clicking with the mouse, clear the command chain.
+        resetCommandChain();
       }
     })
   );

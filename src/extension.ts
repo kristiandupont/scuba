@@ -297,7 +297,10 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((e) => {
       if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
-        // When clicking with the mouse, clear the command chain.
+        if (currentMode !== insertMode.name) {
+          changeMode({ mode: normalMode.name });
+        }
+
         resetCommandChain();
       }
     })

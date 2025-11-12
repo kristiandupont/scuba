@@ -15,8 +15,8 @@ export type Motion = (
 ) => vscode.Selection[];
 
 export const motions: Record<string, Motion> = {
-  w: makeRegexMotion(/\w+\b\s*/g, "forward"),
-  b: makeRegexMotion(/\s*\b\w+\b/g, "backward"),
+  w: makeRegexMotion(/(\w+|[^\w\s]+)\s*/g, "forward"),
+  b: makeRegexMotion(/\s*(\w+|[^\w\s]+)/g, "backward"),
   iw: makeRegexMotion(/\b\w+\b/g, "inside"),
 
   W: makeRegexMotion(/\S+\s*/g, "forward"),

@@ -9,7 +9,6 @@ import {
   popSelections,
   undoPopSelections,
 } from "./utilities/selection";
-import { getIsCursor } from "./utilities/isCursor";
 import { incrementNumberUnderCursor } from "./utilities/edits";
 
 const normalKeyMap: KeyMap = [
@@ -99,6 +98,7 @@ const normalKeyMap: KeyMap = [
   { keys: "*", command: "findWordAtCursor.next" },
   { keys: "#", command: "findWordAtCursor.previous" },
   { keys: "@", command: "editor.action.addSelectionToNextFindMatch" },
+  { keys: " a", command: "editor.action.changeAll" },
   { keys: "%", command: "editor.action.jumpToBracket" },
 
   {

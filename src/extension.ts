@@ -16,6 +16,11 @@ import {
 import { findCharMode, tillCharMode } from "./char-search-modes";
 import { goToLineMode } from "./goToLineMode";
 import { activate as activateTreeSitter } from "./utilities/parse-tree";
+import {
+  youSurroundMode,
+  changeSurroundMode,
+  deleteSurroundMode,
+} from "./motion-surround-modes";
 
 export const defaultMode = "normal";
 
@@ -194,6 +199,9 @@ const modes: Mode[] = [
   lineSelectMode,
   smartSelectMode,
   surroundMode,
+  youSurroundMode,
+  changeSurroundMode,
+  deleteSurroundMode,
   sneakMode,
   sneakBackwardsMode,
   findCharMode,

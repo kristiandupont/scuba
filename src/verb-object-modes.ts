@@ -165,6 +165,13 @@ export const changeObjectMode: Mode = {
       changeMode({ mode: "insert" });
       return;
     }
+
+    // Delegate to change-surround mode if keys start with "s"
+    if (keys === "s") {
+      changeMode({ mode: "change-surround" });
+      return;
+    }
+
     const motion = findMotion(keys);
 
     if (motion) {
@@ -204,6 +211,12 @@ export const deleteObjectMode: Mode = {
       return;
     }
 
+    // Delegate to delete-surround mode if keys start with "s"
+    if (keys === "s") {
+      changeMode({ mode: "delete-surround" });
+      return;
+    }
+
     const motion = findMotion(keys);
 
     if (motion) {
@@ -234,6 +247,12 @@ export const yankObjectMode: Mode = {
     if (keys === "y") {
       await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
       changeMode({ mode: defaultMode });
+      return;
+    }
+
+    // Delegate to you-surround mode if keys start with "s"
+    if (keys === "s") {
+      changeMode({ mode: "you-surround" });
       return;
     }
 

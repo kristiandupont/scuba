@@ -62,16 +62,14 @@ const normalKeyMap: KeyMap = [
   { keys: "Y", command: "editor.action.clipboardCopyAction" },
   {
     keys: "p",
-    command: async function () {
-      return lineModeAwarePaste(vscode.window.activeTextEditor!, "after");
-    },
+    command: async () =>
+      lineModeAwarePaste(vscode.window.activeTextEditor!, "after"),
     leaveInMode: defaultMode,
   },
   {
     keys: "P",
-    command: async function () {
-      return lineModeAwarePaste(vscode.window.activeTextEditor!, "before");
-    },
+    command: async () =>
+      lineModeAwarePaste(vscode.window.activeTextEditor!, "before"),
   },
   {
     keys: "<tab>",

@@ -9,7 +9,7 @@ import {
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
 import { makeSearchMotion } from "./motions/makeSearchMotion";
-import { isAnyTextSelected, pushSelections } from "./utilities/selection";
+import { pushSelections } from "./utilities/selection";
 import { moveCursorsToStartOfLine } from "./utilities/movement";
 
 function applyMotion(

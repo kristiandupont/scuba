@@ -84,7 +84,7 @@ const trees: { [uri: string]: Parser.Tree } = {};
  * @param languageId The vscode language id of the language to load
  * @returns a promise resolving to boolean an indicating whether the language could be loaded
  */
-async function loadLanguage(languageId: string) {
+export async function loadLanguage(languageId: string) {
   const language = languages[languageId];
   if (language == null) {
     return false;

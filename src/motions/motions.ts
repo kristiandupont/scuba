@@ -8,6 +8,7 @@ import { makeWordPartMotion } from "./makeWordPartMotion";
 import { makeNarrowestPairMotion, makePairedMotion } from "./pair-motions";
 import { commentMotion } from "./commentMotion";
 import { functionMotion } from "./functionMotion";
+import { nodeMotion } from "./nodeMotion";
 
 export type Motion = (
   s: vscode.Selection,
@@ -100,4 +101,5 @@ export const motions: Record<string, Motion> = {
 
   af: functionMotion,
   ac: commentMotion,
+  an: nodeMotion,
 };

@@ -376,7 +376,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "web-tree-sitter": "^0.23.0"
+    "web-tree-sitter": "^0.26.0"
   },
   "extensionDependencies": [],
   "bundleDependencies": [

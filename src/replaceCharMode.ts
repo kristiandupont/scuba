@@ -30,6 +30,6 @@ export const replaceCharMode: Mode = {
     });
     textEditor.selections = newSelections;
 
-    changeMode({ mode: defaultMode });
+    await changeMode({ mode: defaultMode });
   },
 };

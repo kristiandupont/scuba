@@ -236,16 +236,16 @@ export const surroundMode: Mode = {
       // Wait for the next key
     } else if (keys.length === 2 && keys[0] === "a") {
       surroundWith(textEditor, keys[1] as SurroundKey);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     } else if (keys.length === 2 && keys[0] === "r") {
       replaceSurrounding(textEditor, keys[1] as SurroundKey);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     } else if (keys === "d") {
       deleteSurrounding(textEditor);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     } else {
       vscode.window.showWarningMessage(`Unknown key sequence: ${keys}.`);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     }
   },
 };

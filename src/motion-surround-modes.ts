@@ -90,7 +90,7 @@ export const youSurroundMode: Mode = {
         vscode.window.showWarningMessage(
           `Unknown surround character: ${surroundChar}.`
         );
-        changeMode({ mode: defaultMode });
+        await changeMode({ mode: defaultMode });
         return;
       }
 
@@ -105,7 +105,7 @@ export const youSurroundMode: Mode = {
         lineSelections,
         surroundChar
       );
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -144,7 +144,7 @@ export const youSurroundMode: Mode = {
       }
 
       vscode.window.showWarningMessage(`Unknown motion: ${motionKeys}.`);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -157,13 +157,13 @@ export const youSurroundMode: Mode = {
     // Apply the motion to get selections
     const selections = applyMotion(motion, textEditor);
     if (selections.length === 0) {
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
     // Add surrounding
     await addSurroundingToSelections(textEditor, selections, surroundChar);
-    changeMode({ mode: defaultMode });
+    await changeMode({ mode: defaultMode });
   },
 };
 
@@ -190,7 +190,7 @@ export const changeSurroundMode: Mode = {
       vscode.window.showWarningMessage(
         `Unknown surround character: ${oldChar}.`
       );
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -198,7 +198,7 @@ export const changeSurroundMode: Mode = {
       vscode.window.showWarningMessage(
         `Unknown surround character: ${newChar}.`
       );
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -233,7 +233,7 @@ export const changeSurroundMode: Mode = {
       }
     }
 
-    changeMode({ mode: defaultMode });
+    await changeMode({ mode: defaultMode });
   },
 };
 
@@ -259,7 +259,7 @@ export const deleteSurroundMode: Mode = {
       vscode.window.showWarningMessage(
         `Unknown surround character: ${surroundChar}.`
       );
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -290,6 +290,6 @@ export const deleteSurroundMode: Mode = {
       }
     }
 
-    changeMode({ mode: defaultMode });
+    await changeMode({ mode: defaultMode });
   },
 };

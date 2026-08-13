@@ -7,7 +7,7 @@ function makeCharSearchHandler(
   return async function (keys: string, textEditor: vscode.TextEditor) {
     if (keys.length !== 1) {
       vscode.window.showErrorMessage("Invalid key for char search");
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -30,7 +30,7 @@ function makeCharSearchHandler(
     });
 
     textEditor.selections = newSelections;
-    changeMode({ mode: defaultMode });
+    await changeMode({ mode: defaultMode });
   };
 }
 

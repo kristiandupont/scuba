@@ -10,7 +10,7 @@ function makeSneakHandler(direction: "forward" | "backward") {
 
     if (keys.length !== 2) {
       vscode.window.showErrorMessage("Invalid key for sneak");
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
@@ -35,7 +35,7 @@ function makeSneakHandler(direction: "forward" | "backward") {
     });
 
     textEditor.selections = newSelections;
-    changeMode({ mode: defaultMode });
+    await changeMode({ mode: defaultMode });
   };
 }
 

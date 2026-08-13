@@ -56,7 +56,7 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
   }
 
   if (previousMode && previousMode.onExit) {
-    previousMode.onExit();
+    await previousMode.onExit();
   }
 
   const mode = modes.find((mode) => mode.name === modeName);
@@ -68,10 +68,12 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
   currentMode = modeName;
   resetCommandChain();
   if (mode.onEnter) {
-    mode.onEnter(previousMode?.name);
+    await mode.onEnter(previousMode.name);
   }
 
-  vscode.commands.executeCommand(
+  // Awaited because the keybinding `when` clauses are gated on this context
+  // key; until it lands, keys are still routed to the previous mode.
+  await vscode.commands.executeCommand(
     "setContext",
     "scuba.currentMode",
     currentMode,
@@ -166,7 +168,7 @@ export function makeSubChainHandler(
         }
       }
       if (leaveInMode) {
-        changeMode({ mode: leaveInMode });
+        await changeMode({ mode: leaveInMode });
       } else {
         resetCommandChain();
       }
@@ -179,7 +181,7 @@ export function makeSubChainHandler(
       if (!partialMatch) {
         vscode.window.showWarningMessage(`Unknown key sequence: ${keys}.`);
         if (leaveInModeOnNoMatch) {
-          changeMode({ mode: leaveInModeOnNoMatch });
+          await changeMode({ mode: leaveInModeOnNoMatch });
         } else {
           resetCommandChain();
         }
@@ -238,43 +240,58 @@ function updateModeIndicator() {
     mode.backgroundColor || new vscode.ThemeColor("statusBar.background");
 }
 
-async function handleNonInsertKey(
-  key: string,
-  textEditor: vscode.TextEditor,
-  edit?: vscode.TextEditorEdit,
-) {
-  activeCommandChain.push(key);
-  updateModeIndicator();
+let keyQueue: Promise<void> = Promise.resolve();
+
+/**
+ * Keys are handled strictly one at a time.
+ *
+ * Handlers await editor commands, and a key pressed during one of those awaits
+ * used to append to the command chain of the key still being processed -- two
+ * quick presses of right became the unknown combination "<right><right>".
+ * Queueing also means a replayed key sequence (dot, macros) can run as one
+ * unit without live keypresses interleaving into it.
+ */
+function enqueue(work: () => Promise<void>): Promise<void> {
+  keyQueue = keyQueue
+    .then(work)
+    .catch((e) => console.error("Scuba: key handling failed", e));
+  return keyQueue;
+}
+
+function enqueueKey(key: string): Promise<void> {
+  return enqueue(() => handleNonInsertKey(key));
+}
+
+async function handleNonInsertKey(key: string) {
+  // Resolved here rather than at enqueue time: a queued key may not run until
+  // after the editor it was typed into has stopped being the active one.
+  const textEditor = vscode.window.activeTextEditor;
+  if (!textEditor) {
+    return;
+  }
 
   const mode = modes.find((mode) => mode.name === currentMode);
-  if (!mode) {
+  if (!mode || mode.isInsertMode) {
     return;
   }
 
-  if (mode.isInsertMode) {
-    return;
-  }
+  activeCommandChain.push(key);
+  updateModeIndicator();
 
   const command = activeCommandChain.join("");
   await mode.handleSubCommandChain(command, textEditor);
 }
 
-async function nonInsertType(
+function nonInsertType(
   textEditor: vscode.TextEditor,
   edit: vscode.TextEditorEdit,
   ...args: any[]
 ) {
-  const key = args[0].text;
-  handleNonInsertKey(key, textEditor, edit);
+  return enqueueKey(args[0].text);
 }
 
-async function handleNonCharacterKey({ key }: { key: string }) {
-  const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    return;
-  }
-
-  handleNonInsertKey(key, editor);
+function handleNonCharacterKey({ key }: { key: string }) {
+  return enqueueKey(key);
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -297,25 +314,31 @@ export function activate(context: vscode.ExtensionContext) {
   );
   modeIndicator.show();
 
-  changeMode({ mode: defaultMode });
+  enqueue(() => changeMode({ mode: defaultMode }));
 
-  // Listen for selection changes with the mouse
+  // Listen for selection changes with the mouse. These go through the same
+  // queue as keys, so a click landing mid-chain can't interleave with the key
+  // that is still being handled.
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((e) => {
-      if (e.kind === vscode.TextEditorSelectionChangeKind.Mouse) {
+      if (e.kind !== vscode.TextEditorSelectionChangeKind.Mouse) {
+        return;
+      }
+
+      enqueue(async () => {
         if (currentMode !== insertMode.name) {
-          changeMode({ mode: normalMode.name });
+          await changeMode({ mode: normalMode.name });
         }
 
         resetCommandChain();
-      }
+      });
     }),
   );
 
   // Listen for active editor changes
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {
-      changeMode({ mode: defaultMode });
+      enqueue(() => changeMode({ mode: defaultMode }));
     }),
   );
 

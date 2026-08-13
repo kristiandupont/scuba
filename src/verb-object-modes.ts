@@ -162,13 +162,13 @@ export const changeObjectMode: Mode = {
       moveCursorsToStartOfLine(vscode.window.activeTextEditor!);
       await vscode.commands.executeCommand("cursorHome");
       await vscode.commands.executeCommand("deleteAllRight");
-      changeMode({ mode: "insert" });
+      await changeMode({ mode: "insert" });
       return;
     }
 
     // Delegate to change-surround mode if keys start with "s"
     if (keys === "s") {
-      changeMode({ mode: "change-surround" });
+      await changeMode({ mode: "change-surround" });
       return;
     }
 
@@ -187,10 +187,10 @@ export const changeObjectMode: Mode = {
         await vscode.commands.executeCommand("deleteRight");
       }
 
-      changeMode({ mode: anySelection ? "insert" : defaultMode });
+      await changeMode({ mode: anySelection ? "insert" : defaultMode });
     } else {
       vscode.window.showWarningMessage(`Unknown motion key sequence: ${keys}.`);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     }
   },
 };
@@ -207,13 +207,13 @@ export const deleteObjectMode: Mode = {
   ) {
     if (keys === "d") {
       await vscode.commands.executeCommand("editor.action.clipboardCutAction");
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
     // Delegate to delete-surround mode if keys start with "s"
     if (keys === "s") {
-      changeMode({ mode: "delete-surround" });
+      await changeMode({ mode: "delete-surround" });
       return;
     }
 
@@ -226,10 +226,10 @@ export const deleteObjectMode: Mode = {
 
       await yank(motion, textEditor);
       await deleteFromMotion(motion, textEditor);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     } else {
       vscode.window.showWarningMessage(`Unknown motion key sequence: ${keys}.`);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     }
   },
 };
@@ -246,13 +246,13 @@ export const yankObjectMode: Mode = {
   ) {
     if (keys === "y") {
       await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
       return;
     }
 
     // Delegate to you-surround mode if keys start with "s"
     if (keys === "s") {
-      changeMode({ mode: "you-surround" });
+      await changeMode({ mode: "you-surround" });
       return;
     }
 
@@ -264,10 +264,10 @@ export const yankObjectMode: Mode = {
       }
 
       await yank(motion, textEditor);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     } else {
       vscode.window.showWarningMessage(`Unknown motion key sequence: ${keys}.`);
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     }
   },
 };

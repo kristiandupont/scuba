@@ -28,7 +28,7 @@ export const goToLineMode: Mode = {
         lineNumber: line,
       });
 
-      changeMode({ mode: defaultMode });
+      await changeMode({ mode: defaultMode });
     }
   },
 };

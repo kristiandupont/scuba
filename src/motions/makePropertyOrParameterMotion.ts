@@ -5,7 +5,9 @@ import {
   isParameterOrArgumentNode,
 } from "../utilities/tree-sitter-helpers";
 
-export function makePropertyOrParameterMotion(mode: "inside" | "around") {
+export function makePropertyOrParameterMotion(
+  mode: "forward" | "backward" | "inside" | "around",
+) {
   return (s: vscode.Selection, doc: vscode.TextDocument) => {
     let node = getNodeFromSelection(s, doc);
     while (
@@ -20,23 +22,39 @@ export function makePropertyOrParameterMotion(mode: "inside" | "around") {
       return [];
     }
 
-    let start = node.startPosition;
-    let end = node.endPosition;
+    let startPos = node.startPosition;
+    let endPos = node.endPosition;
 
     // If mode is "around", include the following comma (unless it's the last one -- in that case,
     // include the previous comma, if there is one)
     if (mode === "around") {
       const nextSibling = node.nextSibling;
       if (nextSibling && [",", ";"].includes(nextSibling.text)) {
-        end = nextSibling.endPosition;
+        endPos = nextSibling.endPosition;
       } else {
         const previousSibling = node.previousSibling;
         if (previousSibling && previousSibling.text === ",") {
-          start = previousSibling.startPosition;
+          startPos = previousSibling.startPosition;
         }
       }
     }
 
-    return [new vscode.Selection(start.row, start.column, end.row, end.column)];
+    const start = new vscode.Position(startPos.row, startPos.column);
+    const end = new vscode.Position(
+      node.endPosition.row,
+      node.endPosition.column,
+    );
+    let anchor = s.anchor;
+    let active = s.active;
+
+    if (mode === "forward") {
+      active = end;
+    } else if (mode === "backward") {
+      active = start;
+    } else {
+      anchor = start;
+      active = end;
+    }
+    return [new vscode.Selection(anchor, active)];
   };
 }

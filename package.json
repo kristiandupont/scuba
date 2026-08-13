@@ -44,6 +44,14 @@
       {
         "command": "scuba.selectTagName",
         "title": "Scuba: Select HTML/JSX tag name"
+      },
+      {
+        "command": "scuba.spreadToSiblings",
+        "title": "Scuba: Select all siblings of the same type"
+      },
+      {
+        "command": "scuba.spreadToAllSiblings",
+        "title": "Scuba: Select all siblings"
       }
     ],
     "keybindings": [

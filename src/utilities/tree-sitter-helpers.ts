@@ -31,6 +31,37 @@ export function getNodesAtCursors(editor: vscode.TextEditor) {
   );
 }
 
+export function nodesHaveSameRange(a: SyntaxNode, b: SyntaxNode): boolean {
+  return (
+    a.startPosition.row === b.startPosition.row &&
+    a.startPosition.column === b.startPosition.column &&
+    a.endPosition.row === b.endPosition.row &&
+    a.endPosition.column === b.endPosition.column
+  );
+}
+
+/**
+ * Climb to the outermost ancestor that covers exactly the same range as the
+ * given node. Tree-sitter often nests several nodes over identical ranges
+ * (an object is an expression is an expression_statement, and so on); this
+ * picks the one that is actually a sibling among its peers.
+ */
+export function outermostNodeWithSameRange(node: SyntaxNode): SyntaxNode {
+  while (node.parent && nodesHaveSameRange(node, node.parent)) {
+    node = node.parent;
+  }
+  return node;
+}
+
+export function nodeToSelection(node: SyntaxNode): vscode.Selection {
+  return new vscode.Selection(
+    node.startPosition.row,
+    node.startPosition.column,
+    node.endPosition.row,
+    node.endPosition.column
+  );
+}
+
 export function isFunctionDefinitionNode(node: any): boolean {
   return [
     "function_definition",

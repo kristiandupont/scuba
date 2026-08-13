@@ -11,6 +11,7 @@ import {
   selectCurrentNode,
   selectFirstChildNode,
   selectParentNode,
+  spreadToSiblings,
 } from "./smart-select-commands";
 
 export const smartSelectMode: Mode = {
@@ -46,6 +47,21 @@ export const smartSelectMode: Mode = {
 
     { keys: "<a-up>", command: async () => moveSiblingNode("prev") },
     { keys: "<a-down>", command: async () => moveSiblingNode("next") },
+
+    {
+      keys: "*",
+      command: async () => {
+        pushSelections(vscode.window.activeTextEditor!);
+        spreadToSiblings(true);
+      },
+    },
+    {
+      keys: "g*",
+      command: async () => {
+        pushSelections(vscode.window.activeTextEditor!);
+        spreadToSiblings(false);
+      },
+    },
 
     { keys: "<c-left>", command: "editor.action.smartSelect.expand" },
     { keys: "<c-right>", command: "editor.action.smartSelect.shrink" },

@@ -8,21 +8,23 @@ import { makeWordPartMotion } from "./makeWordPartMotion";
 import { makeNarrowestPairMotion, makePairedMotion } from "./pair-motions";
 import { commentMotion } from "./commentMotion";
 import { functionMotion } from "./functionMotion";
-import { nodeMotion } from "./nodeMotion";
+import { makeNodeMotion } from "./nodeMotion";
 
 export type Motion = (
   s: vscode.Selection,
-  doc: vscode.TextDocument
+  doc: vscode.TextDocument,
 ) => vscode.Selection[];
 
 export const motions: Record<string, Motion> = {
   w: makeRegexMotion(/(\w+|[^\w\s]+)\s*/g, "forward"),
   b: makeRegexMotion(/\s*(\w+|[^\w\s]+)/g, "backward"),
   iw: makeRegexMotion(/\b\w+\b/g, "inside"),
+  aw: makeRegexMotion(/\b\w+\b/g, "around"),
 
   W: makeRegexMotion(/\S+\s*/g, "forward"),
   B: makeRegexMotion(/\s*\S+/g, "backward"),
   iW: makeRegexMotion(/\S+/g, "inside"),
+  aW: makeRegexMotion(/\S+/g, "around"),
 
   æ: makeWordPartMotion("forward"),
   Æ: makeWordPartMotion("backward"),
@@ -46,7 +48,7 @@ export const motions: Record<string, Motion> = {
       ["'", "'"],
       ["`", "`"],
     ],
-    "inside"
+    "inside",
   ),
   aq: makeNarrowestPairMotion(
     [
@@ -54,7 +56,7 @@ export const motions: Record<string, Motion> = {
       ["'", "'"],
       ["`", "`"],
     ],
-    "around"
+    "around",
   ),
   "(": makePairedMotion(["(", ")"], "backward"),
   ")": makePairedMotion(["(", ")"], "forward"),
@@ -79,7 +81,7 @@ export const motions: Record<string, Motion> = {
       ["{", "}"],
       ["<", ">"],
     ],
-    "inside"
+    "inside",
   ),
   ab: makeNarrowestPairMotion(
     [
@@ -88,7 +90,7 @@ export const motions: Record<string, Motion> = {
       ["{", "}"],
       ["<", ">"],
     ],
-    "around"
+    "around",
   ),
   e: makeElementMotion("forward"),
   ie: makeElementMotion("inside"),
@@ -96,10 +98,16 @@ export const motions: Record<string, Motion> = {
   ii: makeIndentationScopeMotion("inside"),
   ai: makeIndentationScopeMotion("around"),
 
+  p: makePropertyOrParameterMotion("forward"),
   ip: makePropertyOrParameterMotion("inside"),
   ap: makePropertyOrParameterMotion("around"),
 
+  if: functionMotion,
   af: functionMotion,
+  ic: commentMotion,
   ac: commentMotion,
-  an: nodeMotion,
+
+  n: makeNodeMotion("forward"),
+  in: makeNodeMotion("inside"),
+  an: makeNodeMotion("around"),
 };

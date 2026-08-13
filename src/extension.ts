@@ -44,7 +44,7 @@ export type Mode = {
       isInsertMode: false;
       handleSubCommandChain: (
         keys: string,
-        textEditor: vscode.TextEditor
+        textEditor: vscode.TextEditor,
       ) => Promise<void>;
     }
 );
@@ -74,14 +74,14 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
   vscode.commands.executeCommand(
     "setContext",
     "scuba.currentMode",
-    currentMode
+    currentMode,
   );
   updateModeIndicator();
 
   if (!mode.isInsertMode && !blockTypeSub) {
     blockTypeSub = vscode.commands.registerTextEditorCommand(
       "type",
-      nonInsertType
+      nonInsertType,
     );
   } else if (mode.isInsertMode && !!blockTypeSub) {
     blockTypeSub.dispose();
@@ -113,7 +113,7 @@ export type KeyDefinition = {
     | string
     | ((
         count: number,
-        textEditor: vscode.TextEditor
+        textEditor: vscode.TextEditor,
       ) => Promise<string | void>);
   args?: any;
   leaveInMode?: string;
@@ -124,7 +124,7 @@ export type KeyMap = KeyDefinition[];
 export function makeSubChainHandler(
   keyMap: KeyMap,
   defaultLeaveInMode?: string,
-  leaveInModeOnNoMatch: string | undefined = defaultMode
+  leaveInModeOnNoMatch: string | undefined = defaultMode,
 ) {
   return async (keys: string, textEditor: vscode.TextEditor) => {
     let count = 1;
@@ -144,7 +144,7 @@ export function makeSubChainHandler(
         if (typeof keyDefinition.command === "function") {
           const leaveInOverride = await keyDefinition.command(
             count,
-            textEditor
+            textEditor,
           );
           if (leaveInOverride) {
             leaveInMode = leaveInOverride;
@@ -154,13 +154,13 @@ export function makeSubChainHandler(
             for (let i = 0; i < count; i++) {
               await vscode.commands.executeCommand(
                 keyDefinition.command,
-                keyDefinition.args
+                keyDefinition.args,
               );
             }
           } catch (e) {
             vscode.window.showErrorMessage(
               `Failed to execute command: ${keyDefinition.command}`,
-              (e as Error).message
+              (e as Error).message,
             );
           }
         }
@@ -241,10 +241,8 @@ function updateModeIndicator() {
 async function handleNonInsertKey(
   key: string,
   textEditor: vscode.TextEditor,
-  edit?: vscode.TextEditorEdit
+  edit?: vscode.TextEditorEdit,
 ) {
-  console.info("handleNonInsertKey", key);
-
   activeCommandChain.push(key);
   updateModeIndicator();
 
@@ -283,19 +281,19 @@ export function activate(context: vscode.ExtensionContext) {
   activateTreeSitter(context);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("scuba.changeMode", changeMode)
+    vscode.commands.registerCommand("scuba.changeMode", changeMode),
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "scuba.handleNonCharacterKey",
-      handleNonCharacterKey
-    )
+      handleNonCharacterKey,
+    ),
   );
   activateAdditionalCommands(context);
 
   modeIndicator = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
-    0
+    0,
   );
   modeIndicator.show();
 
@@ -311,14 +309,14 @@ export function activate(context: vscode.ExtensionContext) {
 
         resetCommandChain();
       }
-    })
+    }),
   );
 
   // Listen for active editor changes
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {
       changeMode({ mode: defaultMode });
-    })
+    }),
   );
 
   // vscode.workspace.onDidChangeTextDocument((event) => {

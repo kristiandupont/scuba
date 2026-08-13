@@ -6,8 +6,66 @@ import {
   isParametersNode,
   isElementNode,
   getNodeFromSelection,
+  nodeToSelection,
+  outermostNodeWithSameRange,
 } from "./utilities/tree-sitter-helpers";
 import { SyntaxNode } from "web-tree-sitter";
+
+/**
+ * Replace each selection with one selection per sibling node, so that
+ * subsequent structural navigation happens in every sibling in parallel.
+ *
+ * This is what makes it possible to edit a list of similarly shaped objects
+ * regardless of how each one happens to be formatted: the selections are
+ * derived from the tree, so it doesn't matter which of them Prettier split
+ * across multiple lines.
+ */
+export function spreadToSiblings(sameTypeOnly = true) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const newSelections = editor.selections.flatMap((selection) => {
+    const node = outermostNodeWithSameRange(
+      getNodeFromSelection(selection, editor.document)
+    );
+
+    const parent = node.parent;
+    if (!parent) {
+      return [selection];
+    }
+
+    const siblings = parent.namedChildren.filter(
+      (sibling) => !sameTypeOnly || sibling.type === node.type
+    );
+
+    if (siblings.length === 0) {
+      return [selection];
+    }
+
+    return siblings.map(nodeToSelection);
+  });
+
+  // Two cursors in the same list spread to the same set of siblings, so drop
+  // the duplicates rather than leaving the editor with stacked selections.
+  const seen = new Set<string>();
+  const deduped = newSelections.filter((selection) => {
+    const key = `${selection.start.line}:${selection.start.character}-${selection.end.line}:${selection.end.character}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+
+  if (deduped.length === 0) {
+    return;
+  }
+
+  editor.selections = deduped;
+  editor.revealRange(editor.selection);
+}
 
 export async function selectSiblingNode(direction: "next" | "prev") {
   const editor = vscode.window.activeTextEditor;
@@ -402,6 +460,12 @@ export function activateSmartSelectCommands(context: vscode.ExtensionContext) {
       selectFirstParameter
     ),
     vscode.commands.registerCommand("scuba.selectElement", selectElement),
-    vscode.commands.registerCommand("scuba.selectTagName", selectTagName)
+    vscode.commands.registerCommand("scuba.selectTagName", selectTagName),
+    vscode.commands.registerCommand("scuba.spreadToSiblings", () =>
+      spreadToSiblings(true)
+    ),
+    vscode.commands.registerCommand("scuba.spreadToAllSiblings", () =>
+      spreadToSiblings(false)
+    )
   );
 }

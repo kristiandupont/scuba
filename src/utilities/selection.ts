@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { isLinewise } from "./clipboard";
 
 export function isAnyTextSelected(textEditor: vscode.TextEditor) {
   return textEditor.selections.some((selection) => {
@@ -52,38 +53,57 @@ export async function lineModeAwarePaste(
   place: "before" | "after"
 ): Promise<void> {
   if (isAnyTextSelected(editor)) {
-    // If there are selections, perform a regular paste operation
-    vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    // Pasting over a selection replaces it, whatever shape the yank was.
+    await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
     return;
   }
 
   const text = await vscode.env.clipboard.readText();
 
-  if (text.endsWith("\n")) {
-    editor.edit((editBuilder) => {
-      editor.selections.forEach((selection) => {
-        const position = selection.active;
-        const lineNumber =
-          place === "before" ? position.line : position.line + 1;
-
-        // Insert the text on a new line below the current line
-        const insertPosition = new vscode.Position(lineNumber, 0);
-        editBuilder.insert(insertPosition, text);
-
-        const lines = text.split("\n");
-        // Move the cursor to the new line
-        const newPosition = new vscode.Position(
-          lineNumber,
-          lines[lines.length - 1].length
-        );
-        editor.selection = new vscode.Selection(newPosition, newPosition);
-      });
-    });
-  } else {
-    // If it's not line mode, perform a regular paste operation
-    if (place === "after" && !isAnyTextSelected(editor)) {
-      vscode.commands.executeCommand("cursorRight");
+  if (!isLinewise(text)) {
+    if (place === "after") {
+      await vscode.commands.executeCommand("cursorRight");
     }
-    vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    await vscode.commands.executeCommand("editor.action.clipboardPasteAction");
+    return;
+  }
+
+  const document = editor.document;
+  const lastLine = document.lineCount - 1;
+  const body = text.endsWith("\n") ? text : text + "\n";
+
+  // Where the pasted block will begin, recorded before the edit shifts things.
+  const singleCursor = editor.selections.length === 1;
+  const cursorLine = editor.selection.active.line;
+  const blockStartLine = place === "before" ? cursorLine : cursorLine + 1;
+
+  await editor.edit((editBuilder) => {
+    for (const selection of editor.selections) {
+      const targetLine =
+        place === "before" ? selection.active.line : selection.active.line + 1;
+
+      if (targetLine > lastLine) {
+        // Nothing below the last line to insert in front of, and the last line
+        // may have no newline of its own, so append one along with the text.
+        editBuilder.insert(
+          document.lineAt(lastLine).range.end,
+          "\n" + body.replace(/\n$/, "")
+        );
+      } else {
+        editBuilder.insert(new vscode.Position(targetLine, 0), body);
+      }
+    }
+  });
+
+  // Land the cursor on the pasted text, as vim does. With several cursors the
+  // insertions shift each other, so leave those where VSCode adjusted them.
+  if (singleCursor) {
+    const landing = document.lineAt(Math.min(blockStartLine, document.lineCount - 1));
+    const position = landing.range.start.translate(
+      0,
+      landing.firstNonWhitespaceCharacterIndex
+    );
+    editor.selection = new vscode.Selection(position, position);
+    editor.revealRange(editor.selection);
   }
 }

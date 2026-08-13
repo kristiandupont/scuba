@@ -5,10 +5,12 @@ import {
   moveCursorsToStartOfLine,
 } from "./utilities/movement";
 import {
+  isAnyTextSelected,
   lineModeAwarePaste,
   popSelections,
   undoPopSelections,
 } from "./utilities/selection";
+import { runClipboardCommand } from "./utilities/clipboard";
 import { incrementNumberUnderCursor } from "./utilities/edits";
 
 const normalKeyMap: KeyMap = [
@@ -58,8 +60,24 @@ const normalKeyMap: KeyMap = [
       return "insert";
     },
   },
-  { keys: "D", command: "editor.action.clipboardCutAction" },
-  { keys: "Y", command: "editor.action.clipboardCopyAction" },
+  // With nothing selected VSCode's clipboard commands act on the whole line,
+  // so that is exactly when the yank is linewise.
+  {
+    keys: "D",
+    command: async () =>
+      runClipboardCommand(
+        "editor.action.clipboardCutAction",
+        !isAnyTextSelected(vscode.window.activeTextEditor!)
+      ),
+  },
+  {
+    keys: "Y",
+    command: async () =>
+      runClipboardCommand(
+        "editor.action.clipboardCopyAction",
+        !isAnyTextSelected(vscode.window.activeTextEditor!)
+      ),
+  },
   {
     keys: "p",
     command: async () =>

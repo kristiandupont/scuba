@@ -9,8 +9,9 @@ import {
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
 import { Motion, motions } from "./motions/motions";
 import { makeSearchMotion } from "./motions/makeSearchMotion";
-import { pushSelections } from "./utilities/selection";
+import { isAnyTextSelected, pushSelections } from "./utilities/selection";
 import { moveCursorsToStartOfLine } from "./utilities/movement";
+import { runClipboardCommand, writeClipboard } from "./utilities/clipboard";
 
 function applyMotion(
   motion: Motion,
@@ -44,8 +45,10 @@ async function yank(motion: Motion, editor: vscode.TextEditor): Promise<void> {
     editor.document.getText(selection)
   );
 
-  const combined = textsToCopy.join("\n");
-  await vscode.env.clipboard.writeText(combined);
+  // No motion in the registry is line-shaped, so a motion yank is always
+  // charwise. Recording that explicitly also keeps a previous linewise yank
+  // from being what the clipboard is next compared against.
+  await writeClipboard(textsToCopy.join("\n"), false);
 }
 
 async function deleteFromMotion(
@@ -206,7 +209,10 @@ export const deleteObjectMode: Mode = {
     textEditor: vscode.TextEditor
   ) {
     if (keys === "d") {
-      await vscode.commands.executeCommand("editor.action.clipboardCutAction");
+      await runClipboardCommand(
+        "editor.action.clipboardCutAction",
+        !isAnyTextSelected(textEditor)
+      );
       await changeMode({ mode: defaultMode });
       return;
     }
@@ -245,7 +251,10 @@ export const yankObjectMode: Mode = {
     textEditor: vscode.TextEditor
   ) {
     if (keys === "y") {
-      await vscode.commands.executeCommand("editor.action.clipboardCopyAction");
+      await runClipboardCommand(
+        "editor.action.clipboardCopyAction",
+        !isAnyTextSelected(textEditor)
+      );
       await changeMode({ mode: defaultMode });
       return;
     }

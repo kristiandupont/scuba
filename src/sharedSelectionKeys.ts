@@ -1,21 +1,32 @@
 import * as vscode from "vscode";
-import { defaultMode, KeyMap } from "./extension";
+import { defaultMode, getCurrentMode, KeyMap } from "./extension";
 import {
   isAnyTextSelected,
   lineModeAwarePaste,
   popSelections,
   undoPopSelections,
 } from "./utilities/selection";
+import { runClipboardCommand } from "./utilities/clipboard";
+
+// Referred to by name rather than by importing lineSelectMode, which imports
+// this module in turn.
+const lineSelectModeName = "line-select";
+
+function isLineSelection() {
+  return getCurrentMode() === lineSelectModeName;
+}
 
 export const sharedSelectionKeys: KeyMap = [
   {
     keys: "y",
-    command: "editor.action.clipboardCopyAction",
+    command: async () =>
+      runClipboardCommand("editor.action.clipboardCopyAction", isLineSelection()),
     leaveInMode: "normal",
   },
   {
     keys: "d",
-    command: "editor.action.clipboardCutAction",
+    command: async () =>
+      runClipboardCommand("editor.action.clipboardCutAction", isLineSelection()),
     leaveInMode: "normal",
   },
   {

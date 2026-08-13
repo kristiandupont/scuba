@@ -16,6 +16,7 @@ import {
 import { findCharMode, tillCharMode } from "./char-search-modes";
 import { goToLineMode } from "./goToLineMode";
 import { activate as activateTreeSitter } from "./utilities/parse-tree";
+import { activateClipboard } from "./utilities/clipboard";
 import {
   youSurroundMode,
   changeSurroundMode,
@@ -96,6 +97,10 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
   }
   vscode.window.activeTextEditor.options.cursorStyle =
     mode.cursorStyle || vscode.TextEditorCursorStyle.Block;
+}
+
+export function getCurrentMode() {
+  return currentMode;
 }
 
 export function resetCommandChain() {
@@ -296,6 +301,7 @@ function handleNonCharacterKey({ key }: { key: string }) {
 
 export function activate(context: vscode.ExtensionContext) {
   activateTreeSitter(context);
+  activateClipboard(context);
 
   context.subscriptions.push(
     vscode.commands.registerCommand("scuba.changeMode", changeMode),

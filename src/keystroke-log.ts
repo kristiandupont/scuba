@@ -37,6 +37,14 @@ let insertRepeatable = true;
 
 let replaying = false;
 
+/** Register currently being recorded into, or null when not recording. */
+let recordingRegister: string | null = null;
+
+/** Strokes accumulated for the recording in progress. */
+let recordingStrokes: Keystroke[] = [];
+
+const macros = new Map<string, Keystroke[]>();
+
 export function setKeystrokeLogDependencies(dependencies: Dependencies) {
   deps = dependencies;
 }
@@ -68,6 +76,25 @@ export function resetKeystrokeLog() {
   insertCapture = null;
   insertRepeatable = true;
   replaying = false;
+  recordingRegister = null;
+  recordingStrokes = [];
+  macros.clear();
+}
+
+/**
+ * Add a stroke to the command being built up, and to the macro being recorded
+ * if there is one. The two consume the same stream but end at different times:
+ * a unit ends at the next command boundary, a recording when the user stops it.
+ */
+function appendStroke(stroke: Keystroke) {
+  if (pending.length === 0) {
+    unitStartVersion = deps?.getDocumentVersion() ?? null;
+  }
+  pending.push(stroke);
+
+  if (recordingRegister !== null) {
+    recordingStrokes.push(stroke);
+  }
 }
 
 /** Called for every key, before the dispatcher acts on it. */
@@ -75,10 +102,7 @@ export function recordKey(key: string) {
   if (replaying) {
     return;
   }
-  if (pending.length === 0) {
-    unitStartVersion = deps?.getDocumentVersion() ?? null;
-  }
-  pending.push({ key });
+  appendStroke({ key });
 }
 
 /**
@@ -166,11 +190,18 @@ export function endInsertCapture() {
     // Something happened mid-session we can't reproduce; drop the whole unit
     // rather than replay a half-right edit.
     discardPendingUnit();
+
+    // A recording can't just skip it -- the keys that opened the session are
+    // already in the macro, and replaying those without the text they produced
+    // would be wrong. Better to stop and say so than to store a broken macro.
+    if (recordingRegister !== null) {
+      abortMacroRecording();
+    }
     return;
   }
 
   if (captured.length > 0) {
-    pending.push({ insertedText: captured });
+    appendStroke({ insertedText: captured });
   }
 
   // Left open deliberately: the mode change that ended the session calls
@@ -259,6 +290,59 @@ function handleDocumentChange(e: vscode.TextDocumentChangeEvent) {
   }
 
   captureInsertChange(first);
+}
+
+export function isRecordingMacro() {
+  return recordingRegister !== null;
+}
+
+export function getRecordingRegister() {
+  return recordingRegister;
+}
+
+export function getMacro(register: string) {
+  return macros.get(register) ?? null;
+}
+
+export function startMacroRecording(register: string) {
+  recordingRegister = register;
+  recordingStrokes = [];
+}
+
+export function stopMacroRecording() {
+  if (recordingRegister === null) {
+    return;
+  }
+  macros.set(recordingRegister, recordingStrokes);
+  recordingRegister = null;
+  recordingStrokes = [];
+}
+
+function abortMacroRecording() {
+  const register = recordingRegister;
+  recordingRegister = null;
+  recordingStrokes = [];
+
+  vscode.window.showWarningMessage(
+    `Recording to ${register} stopped: that edit can't be replayed faithfully.`
+  );
+}
+
+/** Replay a recorded macro. */
+export async function playMacro(register: string, count: number) {
+  const strokes = macros.get(register);
+  if (!strokes) {
+    vscode.window.showWarningMessage(`No macro recorded in ${register}.`);
+    return;
+  }
+
+  for (let i = 0; i < count; i++) {
+    await replay(strokes);
+  }
+
+  // As with `.`, the keys that triggered the playback shouldn't become the
+  // change that a later `.` repeats.
+  discardPendingUnit();
 }
 
 /** Repeat the last document-changing command, vim's `.`. */

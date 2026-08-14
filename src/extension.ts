@@ -21,9 +21,13 @@ import {
   activateKeystrokeLog,
   beginInsertCapture,
   endInsertCapture,
+  getRecordingRegister,
+  isRecordingMacro,
   recordKey,
   settle,
+  stopMacroRecording,
 } from "./keystroke-log";
+import { playMacroMode, recordMacroMode } from "./macro-modes";
 import {
   youSurroundMode,
   changeSurroundMode,
@@ -235,6 +239,8 @@ const modes: Mode[] = [
   findCharMode,
   tillCharMode,
   goToLineMode,
+  recordMacroMode,
+  playMacroMode,
 ];
 
 function updateModeIndicator() {
@@ -258,6 +264,12 @@ function updateModeIndicator() {
 
     text = "$(keyboard) " + mode.statusItemText + " " + commandChain;
   }
+
+  const register = getRecordingRegister();
+  if (register !== null) {
+    text += `  $(record) ${register}`;
+  }
+
   modeIndicator.text = text;
 
   modeIndicator.color =
@@ -298,6 +310,19 @@ async function handleNonInsertKey(key: string) {
 
   const mode = modes.find((mode) => mode.name === currentMode);
   if (!mode || mode.isInsertMode) {
+    return;
+  }
+
+  // `q` ends a recording. Caught before the key is chained or recorded, so it
+  // neither lands in the macro nor starts a new recording via its own binding.
+  if (
+    isRecordingMacro() &&
+    key === "q" &&
+    currentMode === defaultMode &&
+    activeCommandChain.length === 0
+  ) {
+    stopMacroRecording();
+    updateModeIndicator();
     return;
   }
 

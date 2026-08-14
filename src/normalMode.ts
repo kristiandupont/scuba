@@ -12,6 +12,7 @@ import {
 } from "./utilities/selection";
 import { runClipboardCommand } from "./utilities/clipboard";
 import { repeatLastChange } from "./keystroke-log";
+import { setPendingPlaybackCount } from "./macro-modes";
 import { incrementNumberUnderCursor } from "./utilities/edits";
 
 const normalKeyMap: KeyMap = [
@@ -108,6 +109,17 @@ const normalKeyMap: KeyMap = [
     keys: ".",
     command: async (count) => {
       await repeatLastChange(count);
+    },
+  },
+
+  // Macros. `q<register>` starts recording and `q` stops it; that second `q`
+  // is intercepted in the dispatcher, so it never reaches this binding.
+  { keys: "q", leaveInMode: "record-macro" },
+  {
+    keys: "Q",
+    command: async (count) => {
+      setPendingPlaybackCount(count);
+      return "play-macro";
     },
   },
 

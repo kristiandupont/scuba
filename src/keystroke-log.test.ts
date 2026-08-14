@@ -5,7 +5,12 @@ import {
   endInsertCapture,
   foldInsertChange,
   getLastChange,
+  getMacro,
+  isRecordingMacro,
+  playMacro,
   recordKey,
+  startMacroRecording,
+  stopMacroRecording,
   repeatLastChange,
   resetKeystrokeLog,
   setKeystrokeLogDependencies,
@@ -216,6 +221,127 @@ suite("repeating the last change", () => {
 
   test("does nothing when no change has been recorded", async () => {
     await repeatLastChange(1);
+    assert.deepStrictEqual(replayedKeys, []);
+  });
+});
+
+suite("macros", () => {
+  setup(() => installLog());
+
+  test("records the keys pressed while recording", () => {
+    startMacroRecording("a");
+    recordKey("x");
+    edited();
+    atRest();
+    stopMacroRecording();
+
+    assert.deepStrictEqual(getMacro("a"), [{ key: "x" }]);
+  });
+
+  test("records across command boundaries, unlike the dot register", () => {
+    startMacroRecording("a");
+    recordKey("w");
+    atRest(); // a motion: dropped from the dot register, kept in the macro
+    recordKey("x");
+    edited();
+    atRest();
+    stopMacroRecording();
+
+    assert.deepStrictEqual(getMacro("a"), [{ key: "w" }, { key: "x" }]);
+    assert.deepStrictEqual(getLastChange(), [{ key: "x" }]);
+  });
+
+  test("records typed text alongside the keys", () => {
+    startMacroRecording("a");
+    recordKey("i");
+    inOperatorMode();
+    beginInsertCapture();
+    typeCharacters("hi", 5);
+    endInsertCapture();
+    atRest();
+    stopMacroRecording();
+
+    assert.deepStrictEqual(getMacro("a"), [
+      { key: "i" },
+      { insertedText: "hi" },
+    ]);
+  });
+
+  test("playing back replays the recorded keys", async () => {
+    startMacroRecording("a");
+    recordKey("x");
+    edited();
+    atRest();
+    stopMacroRecording();
+
+    await playMacro("a", 1);
+
+    assert.deepStrictEqual(replayedKeys, ["x"]);
+  });
+
+  test("a count replays the macro that many times", async () => {
+    startMacroRecording("a");
+    recordKey("x");
+    edited();
+    atRest();
+    stopMacroRecording();
+
+    await playMacro("a", 3);
+
+    assert.deepStrictEqual(replayedKeys, ["x", "x", "x"]);
+  });
+
+  test("keys replayed by a macro are not recorded into another macro", async () => {
+    startMacroRecording("a");
+    recordKey("x");
+    edited();
+    atRest();
+    stopMacroRecording();
+
+    startMacroRecording("b");
+    recordKey("Q");
+    await playMacro("a", 1);
+    atRest();
+    stopMacroRecording();
+
+    // `b` holds the invocation, not `a`'s expansion.
+    assert.deepStrictEqual(getMacro("b"), [{ key: "Q" }]);
+  });
+
+  test("a macro that plays itself does not recurse", async () => {
+    startMacroRecording("a");
+    recordKey("x");
+    edited();
+    atRest();
+    stopMacroRecording();
+
+    // Stand in for a macro whose body invokes its own register.
+    const selfReferential = getMacro("a")!;
+    await playMacro("a", 1);
+    await playMacro("a", 1);
+
+    assert.deepStrictEqual(replayedKeys, ["x", "x"]);
+    assert.deepStrictEqual(selfReferential, [{ key: "x" }]);
+  });
+
+  test("recording stops when an insert session can't be replayed", () => {
+    startMacroRecording("a");
+    recordKey("i");
+    inOperatorMode();
+    beginInsertCapture();
+
+    change({ text: "a", rangeOffset: 10 });
+    change({ text: "X", rangeOffset: 2 }); // cursor jumped: not repeatable
+
+    endInsertCapture();
+    atRest();
+
+    assert.strictEqual(isRecordingMacro(), false);
+    assert.strictEqual(getMacro("a"), null);
+  });
+
+  test("playing an empty register does nothing", async () => {
+    await playMacro("z", 1);
     assert.deepStrictEqual(replayedKeys, []);
   });
 });

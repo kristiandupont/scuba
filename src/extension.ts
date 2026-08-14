@@ -18,6 +18,13 @@ import { goToLineMode } from "./goToLineMode";
 import { activate as activateTreeSitter } from "./utilities/parse-tree";
 import { activateClipboard } from "./utilities/clipboard";
 import {
+  activateKeystrokeLog,
+  beginInsertCapture,
+  endInsertCapture,
+  recordKey,
+  settle,
+} from "./keystroke-log";
+import {
   youSurroundMode,
   changeSurroundMode,
   deleteSurroundMode,
@@ -66,8 +73,22 @@ export async function changeMode({ mode: modeName }: { mode: string }) {
     return;
   }
 
+  // Bracket the insert session before the mode actually flips, so the text
+  // capture is listening for the first character typed and has stopped
+  // listening before anything the next mode does reaches the document.
+  if (mode.isInsertMode && !previousMode.isInsertMode) {
+    beginInsertCapture();
+  } else if (!mode.isInsertMode && previousMode.isInsertMode) {
+    endInsertCapture();
+  }
+
   currentMode = modeName;
   resetCommandChain();
+
+  // Landing back in the default mode is what completes a command, including
+  // one the user ended with Escape, which never reaches the dispatcher.
+  settleKeystrokeLog();
+
   if (mode.onEnter) {
     await mode.onEnter(previousMode.name);
   }
@@ -282,9 +303,19 @@ async function handleNonInsertKey(key: string) {
 
   activeCommandChain.push(key);
   updateModeIndicator();
+  recordKey(key);
 
   const command = activeCommandChain.join("");
   await mode.handleSubCommandChain(command, textEditor);
+
+  settleKeystrokeLog();
+}
+
+function settleKeystrokeLog() {
+  settle({
+    inDefaultMode: currentMode === defaultMode,
+    chainIsEmpty: activeCommandChain.length === 0,
+  });
 }
 
 function nonInsertType(
@@ -302,6 +333,16 @@ function handleNonCharacterKey({ key }: { key: string }) {
 export function activate(context: vscode.ExtensionContext) {
   activateTreeSitter(context);
   activateClipboard(context);
+  activateKeystrokeLog(context, {
+    // Replay goes through the dispatcher directly rather than the queue: it is
+    // already running inside a queued unit, and enqueueing from there would
+    // deadlock on the entry it is itself part of.
+    handleKey: handleNonInsertKey,
+    leaveInsertMode: () => changeMode({ mode: defaultMode }),
+    resetChain: resetCommandChain,
+    getDocumentVersion: () =>
+      vscode.window.activeTextEditor?.document.version ?? null,
+  });
 
   context.subscriptions.push(
     vscode.commands.registerCommand("scuba.changeMode", changeMode),

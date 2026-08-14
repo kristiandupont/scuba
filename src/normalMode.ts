@@ -11,6 +11,7 @@ import {
   undoPopSelections,
 } from "./utilities/selection";
 import { runClipboardCommand } from "./utilities/clipboard";
+import { repeatLastChange } from "./keystroke-log";
 import { incrementNumberUnderCursor } from "./utilities/edits";
 
 const normalKeyMap: KeyMap = [
@@ -100,6 +101,15 @@ const normalKeyMap: KeyMap = [
 
   { keys: "u", command: "undo" },
   { keys: "U", command: "redo" },
+
+  // Repeat the last change. The count applies to the repeat, so `3.` applies
+  // the recorded change three times.
+  {
+    keys: ".",
+    command: async (count) => {
+      await repeatLastChange(count);
+    },
+  },
 
   // Scroll the window up or down one line:
   { keys: "<c-up>", command: "scrollLineUp" },

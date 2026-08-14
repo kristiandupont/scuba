@@ -1,20 +1,23 @@
 import * as vscode from "vscode";
 import { changeMode, defaultMode, Mode } from "./extension";
+import { isNonCharacterKey, splitKeyTokens } from "./utilities/keys";
 
 function makeSneakHandler(direction: "forward" | "backward") {
   return async function (keys: string, textEditor: vscode.TextEditor) {
-    if (keys.length === 1) {
-      // Wait for second key.
-      return;
-    }
+    const tokens = splitKeyTokens(keys);
 
-    if (keys.length !== 2) {
-      vscode.window.showErrorMessage("Invalid key for sneak");
+    if (tokens.some(isNonCharacterKey)) {
+      // An arrow key or similar can't be part of a search term. Cancel.
       await changeMode({ mode: defaultMode });
       return;
     }
 
-    const word = keys.toLowerCase();
+    if (tokens.length < 2) {
+      // Wait for the second character.
+      return;
+    }
+
+    const word = tokens.slice(0, 2).join("").toLowerCase();
     const searchText = textEditor.document.getText().toLowerCase();
     const newSelections = textEditor.selections.map((selection) => {
       const nextOccurrence =

@@ -1,57 +1,14 @@
 import * as vscode from "vscode";
 import { changeMode, defaultMode, Mode } from "./extension";
-import { Motion, motions } from "./motions/motions";
-import { makeSearchMotion } from "./motions/makeSearchMotion";
+import { applyMotion, findMotion, motions } from "./motions/motions";
 import {
   surroundMap,
   SurroundKey,
+  surroundToMotionMap,
   addSurroundingToSelections,
   changeSurroundingInSelections,
   deleteSurroundingFromSelections,
 } from "./surroundMode";
-
-function applyMotion(
-  motion: Motion,
-  editor: vscode.TextEditor
-): vscode.Selection[] {
-  const document = editor.document;
-  const selections: vscode.Selection[] = editor.selections
-    .map((selection) => motion(selection, document))
-    .flat();
-
-  return selections;
-}
-
-function findMotion(keys: string): Motion | "partial" | undefined {
-  // Search motions aren't registered because they rely on an
-  // unknown second character.
-  if (["f", "F", "t", "T"].includes(keys[0])) {
-    if (keys.length === 1) {
-      return "partial";
-    }
-
-    const mode = ["f", "F"].includes(keys[0]) ? "inclusive" : "exclusive";
-    const direction = ["f", "t"].includes(keys[0]) ? "forward" : "backward";
-    const character = keys[1];
-
-    return makeSearchMotion(character, mode, direction);
-  }
-
-  // Otherwise, check the registry
-  const motion = motions[keys];
-  if (motion) {
-    return motion;
-  }
-
-  const partialMatch = Object.keys(motions).some((motion) =>
-    motion.startsWith(keys)
-  );
-  if (partialMatch) {
-    return "partial";
-  }
-
-  return undefined;
-}
 
 function isSurroundKey(key: string): key is SurroundKey {
   return key in surroundMap;
@@ -68,23 +25,12 @@ export const youSurroundMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    // Special case: "ss" surrounds the entire line
+    // "ss" surrounds the whole line, but needs the surround character first.
     if (keys === "ss") {
-      // Select the whole line(s)
-      const currentSelections = textEditor.selections;
-      const lineSelections = currentSelections.map((selection) => {
-        const line = textEditor.document.lineAt(selection.active.line);
-        return new vscode.Selection(line.range.start, line.range.end);
-      });
-
-      // Wait for the surround character
-      // We'll use a special marker to indicate we're waiting for the surround char
       return;
     }
 
-    // Check if we have captured a motion already (keys should be at least 2 chars)
     if (keys.startsWith("ss") && keys.length === 3) {
-      // "ss<char>" - surround line with char
       const surroundChar = keys[2];
       if (!isSurroundKey(surroundChar)) {
         vscode.window.showWarningMessage(
@@ -202,22 +148,6 @@ export const changeSurroundMode: Mode = {
       return;
     }
 
-    // Find the text object motion for the old surround character
-    // Map surround keys to their "inside" motion equivalents
-    const surroundToMotionMap: Record<string, string> = {
-      '"': 'i"',
-      "'": "i'",
-      "(": "i(",
-      ")": "i(",
-      "[": "i[",
-      "]": "i[",
-      "{": "i{",
-      "}": "i{",
-      "<": "i<",
-      ">": "i<",
-      b: "it", // backticks
-    };
-
     const motionKey = surroundToMotionMap[oldChar];
     if (motionKey) {
       const motion = motions[motionKey];
@@ -262,22 +192,6 @@ export const deleteSurroundMode: Mode = {
       await changeMode({ mode: defaultMode });
       return;
     }
-
-    // Find the text object motion for the surround character
-    // Map surround keys to their "inside" motion equivalents
-    const surroundToMotionMap: Record<string, string> = {
-      '"': 'i"',
-      "'": "i'",
-      "(": "i(",
-      ")": "i(",
-      "[": "i[",
-      "]": "i[",
-      "{": "i{",
-      "}": "i{",
-      "<": "i<",
-      ">": "i<",
-      b: "it", // backticks
-    };
 
     const motionKey = surroundToMotionMap[surroundChar];
     if (motionKey) {

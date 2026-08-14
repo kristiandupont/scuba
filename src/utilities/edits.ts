@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 
-export function incrementNumberUnderCursor(
+export async function incrementNumberUnderCursor(
   editor: vscode.TextEditor,
   addition = 1
 ) {
-  editor.edit((editBuilder) => {
+  await editor.edit((editBuilder) => {
     for (const selection of editor.selections) {
       let text: string;
       let range: vscode.Range;

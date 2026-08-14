@@ -7,45 +7,70 @@ export function isAnyTextSelected(textEditor: vscode.TextEditor) {
   });
 }
 
-let previousSelectionsStack: (readonly vscode.Selection[])[] = [];
-let previousSelectionsStackIndex = 0;
+/**
+ * Selection history, as a pair of stacks rather than one stack with a cursor.
+ *
+ * Going back has to record where it came from, or there is nothing to go
+ * forward to -- which is why the previous single-stack version could never
+ * redo. Kept per document, since restoring one file's selections into another
+ * is meaningless and can land outside its bounds.
+ */
+type SelectionHistory = {
+  back: (readonly vscode.Selection[])[];
+  forward: (readonly vscode.Selection[])[];
+};
+
+const historyLimit = 32;
+const histories = new Map<string, SelectionHistory>();
+
+function historyFor(textEditor: vscode.TextEditor): SelectionHistory {
+  const key = textEditor.document.uri.toString();
+  let history = histories.get(key);
+  if (!history) {
+    history = { back: [], forward: [] };
+    histories.set(key, history);
+  }
+  return history;
+}
+
+export function forgetSelectionHistory(document: vscode.TextDocument) {
+  histories.delete(document.uri.toString());
+}
 
 export function pushSelections(textEditor: vscode.TextEditor) {
-  // If we are not at the top of the stack, truncate the stack
-  if (previousSelectionsStackIndex < previousSelectionsStack.length) {
-    previousSelectionsStack = previousSelectionsStack.slice(
-      0,
-      previousSelectionsStackIndex
-    );
-  }
+  const history = historyFor(textEditor);
 
-  previousSelectionsStack.push(textEditor.selections);
-  previousSelectionsStackIndex++;
+  history.back.push(textEditor.selections);
+  // Moving somewhere new abandons whatever we could have gone forward to.
+  history.forward = [];
 
-  if (previousSelectionsStack.length > 32) {
-    previousSelectionsStack.shift();
-    previousSelectionsStackIndex--;
+  if (history.back.length > historyLimit) {
+    history.back.shift();
   }
 }
 
 export function popSelections(textEditor: vscode.TextEditor) {
-  if (previousSelectionsStackIndex > 0) {
-    previousSelectionsStackIndex--;
-    const previousSelections =
-      previousSelectionsStack[previousSelectionsStackIndex];
-    textEditor.selections = previousSelections;
-    textEditor.revealRange(textEditor.selection);
+  const history = historyFor(textEditor);
+  const previous = history.back.pop();
+  if (!previous) {
+    return;
   }
+
+  history.forward.push(textEditor.selections);
+  textEditor.selections = previous;
+  textEditor.revealRange(textEditor.selection);
 }
 
 export function undoPopSelections(textEditor: vscode.TextEditor) {
-  if (previousSelectionsStackIndex < previousSelectionsStack.length - 1) {
-    previousSelectionsStackIndex++;
-    const nextSelections =
-      previousSelectionsStack[previousSelectionsStackIndex];
-    textEditor.selections = nextSelections;
-    textEditor.revealRange(textEditor.selection);
+  const history = historyFor(textEditor);
+  const next = history.forward.pop();
+  if (!next) {
+    return;
   }
+
+  history.back.push(textEditor.selections);
+  textEditor.selections = next;
+  textEditor.revealRange(textEditor.selection);
 }
 
 export async function lineModeAwarePaste(

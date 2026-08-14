@@ -10,12 +10,19 @@ export const goToLineMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
+    // Anything that isn't a digit ends the mode rather than sitting in the
+    // chain forever; previously one stray letter made Escape the only way out.
+    if (!/^\d*\n?$/.test(keys)) {
+      await changeMode({ mode: defaultMode });
+      return;
+    }
+
     if (keys.endsWith("\n")) {
       keys = keys.slice(0, -1);
       const line = parseInt(keys, 10);
 
       if (isNaN(line)) {
-        vscode.window.showErrorMessage(`Invalid line number: ${keys}`);
+        await changeMode({ mode: defaultMode });
         return;
       }
 

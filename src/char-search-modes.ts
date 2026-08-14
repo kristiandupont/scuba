@@ -1,17 +1,18 @@
 import * as vscode from "vscode";
 import { changeMode, defaultMode, Mode } from "./extension";
+import { singleCharacter } from "./utilities/keys";
 
 function makeCharSearchHandler(
   includeFoundChar: boolean
 ): (keys: string, textEditor: vscode.TextEditor) => Promise<void> {
   return async function (keys: string, textEditor: vscode.TextEditor) {
-    if (keys.length !== 1) {
-      vscode.window.showErrorMessage("Invalid key for char search");
+    const char = singleCharacter(keys);
+    if (char === null) {
+      // Nothing to search for -- an arrow key or similar. Cancel quietly.
       await changeMode({ mode: defaultMode });
       return;
     }
 
-    const char = keys[0];
     const newSelections = textEditor.selections.map((selection) => {
       const nextOccurrence = textEditor.document
         .getText()

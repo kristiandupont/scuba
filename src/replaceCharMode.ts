@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { changeMode, defaultMode, Mode } from "./extension";
+import { singleCharacter } from "./utilities/keys";
 
 export const replaceCharMode: Mode = {
   isInsertMode: false,
@@ -10,9 +11,13 @@ export const replaceCharMode: Mode = {
     keys: string,
     textEditor: vscode.TextEditor
   ) {
-    const key = keys[0];
-    const charCode = key.charCodeAt(0);
-    const char = String.fromCharCode(charCode);
+    const char = singleCharacter(keys);
+    if (char === null) {
+      // An arrow key or similar: nothing to replace with, so cancel.
+      await changeMode({ mode: defaultMode });
+      return;
+    }
+
     const selections = textEditor.selections;
 
     await textEditor.edit((editBuilder) => {

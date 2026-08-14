@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { changeMode, defaultMode, Mode } from "./extension";
 import { playMacro, startMacroRecording } from "./keystroke-log";
+import { singleCharacter } from "./utilities/keys";
 
 /**
  * Count for the playback about to be started.
@@ -26,11 +27,17 @@ export const recordMacroMode: Mode = {
   color: "cyan",
 
   handleSubCommandChain: async function (keys: string) {
-    const register = keys[0];
+    const register = singleCharacter(keys);
+
+    if (register === null) {
+      // An arrow key or similar: no register to name, so cancel.
+      await changeMode({ mode: defaultMode });
+      return;
+    }
 
     if (!isValidRegister(register)) {
       vscode.window.showWarningMessage(
-        `${register} is not a macro register (use a letter or digit).`
+        ` is not a macro register (use a letter or digit).`
       );
       await changeMode({ mode: defaultMode });
       return;
@@ -50,11 +57,17 @@ export const playMacroMode: Mode = {
   color: "cyan",
 
   handleSubCommandChain: async function (keys: string) {
-    const register = keys[0];
+    const register = singleCharacter(keys);
+
+    if (register === null) {
+      // An arrow key or similar: no register to name, so cancel.
+      await changeMode({ mode: defaultMode });
+      return;
+    }
 
     if (!isValidRegister(register)) {
       vscode.window.showWarningMessage(
-        `${register} is not a macro register (use a letter or digit).`
+        ` is not a macro register (use a letter or digit).`
       );
       await changeMode({ mode: defaultMode });
       return;

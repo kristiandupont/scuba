@@ -9,6 +9,7 @@ import { makeNarrowestPairMotion, makePairedMotion } from "./pair-motions";
 import { commentMotion } from "./commentMotion";
 import { functionMotion } from "./functionMotion";
 import { makeNodeMotion } from "./nodeMotion";
+import { makeSearchMotion } from "./makeSearchMotion";
 
 export type Motion = (
   s: vscode.Selection,
@@ -111,3 +112,45 @@ export const motions: Record<string, Motion> = {
   in: makeNodeMotion("inside"),
   an: makeNodeMotion("around"),
 };
+
+/** Run a motion over every selection in the editor. */
+export function applyMotion(
+  motion: Motion,
+  editor: vscode.TextEditor,
+): vscode.Selection[] {
+  return editor.selections
+    .map((selection) => motion(selection, editor.document))
+    .flat();
+}
+
+/**
+ * Look up the motion for a key sequence.
+ *
+ * Returns "partial" when the keys could still grow into a motion, so callers
+ * know to wait for more input rather than report an unknown sequence.
+ */
+export function findMotion(keys: string): Motion | "partial" | undefined {
+  // Search motions aren't in the registry because they depend on a second
+  // character that isn't known until it is typed.
+  if (["f", "F", "t", "T"].includes(keys[0])) {
+    if (keys.length === 1) {
+      return "partial";
+    }
+
+    return makeSearchMotion(
+      keys[1],
+      ["f", "F"].includes(keys[0]) ? "inclusive" : "exclusive",
+      ["f", "t"].includes(keys[0]) ? "forward" : "backward",
+    );
+  }
+
+  const motion = motions[keys];
+  if (motion) {
+    return motion;
+  }
+
+  const partialMatch = Object.keys(motions).some((registered) =>
+    registered.startsWith(keys),
+  );
+  return partialMatch ? "partial" : undefined;
+}

@@ -17,6 +17,7 @@ import { findCharMode, tillCharMode } from "./char-search-modes";
 import { goToLineMode } from "./goToLineMode";
 import { activate as activateTreeSitter } from "./utilities/parse-tree";
 import { activateClipboard } from "./utilities/clipboard";
+import { forgetSelectionHistory } from "./utilities/selection";
 import {
   activateKeystrokeLog,
   beginInsertCapture,
@@ -47,8 +48,8 @@ export type Mode = {
   statusItemText: string;
   onEnter?: (previousMode: string) => Promise<void>;
   onExit?: () => Promise<void>;
-  color?: vscode.ThemeColor;
-  backgroundColor?: vscode.ThemeColor;
+  color?: string | vscode.ThemeColor;
+  backgroundColor?: string | vscode.ThemeColor;
   cursorStyle?: vscode.TextEditorCursorStyle;
 } & (
   | { isInsertMode: true }
@@ -62,19 +63,22 @@ export type Mode = {
 );
 
 export async function changeMode({ mode: modeName }: { mode: string }) {
-  const previousMode = modes.find((mode) => mode.name === currentMode);
-  if (!previousMode) {
-    throw new Error(`Unknown mode: ${currentMode}`);
-  }
-
-  if (previousMode && previousMode.onExit) {
-    await previousMode.onExit();
-  }
-
   const mode = modes.find((mode) => mode.name === modeName);
   if (!mode) {
     vscode.window.showErrorMessage(`Unknown mode: ${modeName}`);
     return;
+  }
+
+  // Only reachable if currentMode was set to something not in `modes`, which
+  // would be a bug here rather than anything the user did.
+  const previousMode = modes.find((mode) => mode.name === currentMode);
+  if (!previousMode) {
+    vscode.window.showErrorMessage(`Unknown current mode: ${currentMode}`);
+    return;
+  }
+
+  if (previousMode.onExit) {
+    await previousMode.onExit();
   }
 
   // Bracket the insert session before the mode actually flips, so the text
@@ -412,6 +416,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.onDidChangeActiveTextEditor(() => {
       enqueue(() => changeMode({ mode: defaultMode }));
     }),
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument(forgetSelectionHistory),
   );
 
   // vscode.workspace.onDidChangeTextDocument((event) => {

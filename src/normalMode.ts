@@ -142,13 +142,13 @@ const normalKeyMap: KeyMap = [
   {
     keys: "-",
     command: async function () {
-      incrementNumberUnderCursor(vscode.window.activeTextEditor!, -1);
+      await incrementNumberUnderCursor(vscode.window.activeTextEditor!, -1);
     },
   },
   {
     keys: "+",
     command: async function () {
-      incrementNumberUnderCursor(vscode.window.activeTextEditor!, 1);
+      await incrementNumberUnderCursor(vscode.window.activeTextEditor!, 1);
     },
   },
 

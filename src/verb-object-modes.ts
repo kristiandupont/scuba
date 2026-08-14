@@ -7,23 +7,10 @@ import {
   resetCommandChain,
 } from "./extension";
 import { sharedSelectionKeys } from "./sharedSelectionKeys";
-import { Motion, motions } from "./motions/motions";
-import { makeSearchMotion } from "./motions/makeSearchMotion";
+import { applyMotion, findMotion, Motion } from "./motions/motions";
 import { isAnyTextSelected, pushSelections } from "./utilities/selection";
 import { moveCursorsToStartOfLine } from "./utilities/movement";
 import { runClipboardCommand, writeClipboard } from "./utilities/clipboard";
-
-function applyMotion(
-  motion: Motion,
-  editor: vscode.TextEditor
-): vscode.Selection[] {
-  const document = editor.document;
-  const selections: vscode.Selection[] = editor.selections
-    .map((selection) => motion(selection, document))
-    .flat();
-
-  return selections;
-}
 
 async function selectFromMotion(
   motion: Motion,
@@ -66,37 +53,6 @@ async function deleteFromMotion(
   await editor.edit((editBuilder) => {
     edits.forEach((edit) => editBuilder.replace(edit.range, edit.newText));
   });
-}
-
-function findMotion(keys: string): Motion | "partial" | undefined {
-  // Search motions aren't registered because they rely on an
-  // unknown second character.
-  if (["f", "F", "t", "T"].includes(keys[0])) {
-    if (keys.length === 1) {
-      return "partial";
-    }
-
-    const mode = ["f", "F"].includes(keys[0]) ? "inclusive" : "exclusive";
-    const direction = ["f", "t"].includes(keys[0]) ? "forward" : "backward";
-    const character = keys[1];
-
-    return makeSearchMotion(character, mode, direction);
-  }
-
-  // Otherwise, check the registry
-  const motion = motions[keys];
-  if (motion) {
-    return motion;
-  }
-
-  const partialMatch = Object.keys(motions).some((motion) =>
-    motion.startsWith(keys)
-  );
-  if (partialMatch) {
-    return "partial";
-  }
-
-  return undefined;
 }
 
 const selectSubChainHandler = makeSubChainHandler(
